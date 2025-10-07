@@ -1,3 +1,4 @@
+<!-- eslint-disable prettier/prettier -->
 <script lang="ts" setup>
 import { ref, reactive } from 'vue';
 import { useLocale } from 'vuetify';
@@ -47,6 +48,7 @@ const headers = reactive([
 ]);
 
 const loading = ref(true);
+
 const computeAvatarText = (value) => {
   if (!value) return '';
   const nameArray = value.split(' ');

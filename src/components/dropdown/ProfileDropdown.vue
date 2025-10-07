@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import { logout } from '@/security/keycloak';
+
 
 const items = [
   {
@@ -36,10 +38,7 @@ const items = [
 const router = useRouter();
 
 const handleLogout = () => {
-  router.push({
-    path: '/auth/login'
-  });
-  sessionStorage.clear();
+  logout();
 };
 </script>
 

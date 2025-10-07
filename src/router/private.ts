@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 const PrivateRoutes = {
   path: '/',
   name: 'Home',
@@ -7,6 +8,21 @@ const PrivateRoutes = {
   redirect: '/main',
   component: () => import('@/layouts/DefaultLayout.vue'),
   children: [
+    {
+      path: '/import',
+      name: 'Data import options',
+      component: () => import('@/views/import/ImportLanding.vue')
+    },
+    {
+      path: 'import/transactions',
+      name: 'ImportTransactions',
+      component: () => import('@/views/import/ImportTransactions.vue')
+    },
+    {
+      path: 'list/transactions',
+      name: 'Transaction List',
+      component: () => import('@/views/tables/TransactionsTable.vue')
+    },
     {
       name: 'Dashboard',
       path: '/',

@@ -43,6 +43,17 @@ export interface IUser {
   access_token?: string;
 }
 
+export interface ITransaction {
+  id: string;
+  transactionDate: string;
+  category: string;
+  description: string;
+  amount: number;
+  currencyCode: string;
+  paymentMode: string;
+  createdAt: string;
+}
+
 export interface ICalendarEvent {
   id: string;
   url: string;

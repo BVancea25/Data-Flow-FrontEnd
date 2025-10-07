@@ -1,3 +1,4 @@
+<!-- eslint-disable prettier/prettier -->
 <script setup lang="ts">
 import Logo from '@/components/Logo.vue';
 import { reactive, computed } from 'vue';
@@ -5,6 +6,27 @@ import { useLocale } from 'vuetify';
 
 const { t } = useLocale();
 const items = [
+  { type: 'subheader', title: t('Data') },
+  {
+    title: t('Import'),
+    props: {
+      prependIcon: 'mdi-invoice-import-outline',
+      link: true,
+      to: '/import',
+      exact: true
+    },
+    value: '/import'
+  },
+  {
+    title: t('Transactions'),
+    props: {
+      prependIcon: 'mdi-currency-usd',
+      link: true,
+      to: '/list/transactions',
+      exact: true
+    },
+    value: '/list/transactions'
+  },
   { type: 'subheader', title: t('apps') },
   {
     title: t('dashboard'),

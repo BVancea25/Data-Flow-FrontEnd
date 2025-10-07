@@ -1,5 +1,7 @@
+/* eslint-disable prettier/prettier */
 import { defineStore } from 'pinia';
 import { fetchMe } from '@/api/user';
+import { logout, getKeycloak } from '@/security/keycloak';
 
 export interface IUserState {
   token: string;
@@ -17,18 +19,8 @@ export const useUserStore = defineStore('user', {
     username: '',
     avatar: '',
     permissions: [],
-    roles: [
-      { title: 'Admin', value: 'admin' },
-      { title: 'Author', value: 'author' },
-      { title: 'Editor', value: 'editor' },
-      { title: 'Maintainer', value: 'maintainer' },
-      { title: 'Subscriber', value: 'subscriber' }
-    ],
-    statusOptions: [
-      { title: 'Pending', value: 'pending' },
-      { title: 'Active', value: 'active' },
-      { title: 'Inactive', value: 'inactive' }
-    ]
+    roles: [],
+    statusOptions: []
   }),
   // Getters
   getters: {
@@ -66,6 +58,15 @@ export const useUserStore = defineStore('user', {
       } catch (e) {
         return Promise.reject(false);
       }
+    },
+    logout() {
+      logout();
+      this.$reset;
+    },
+    refreshFromKeycloak() {
+      const kc = getKeycloak();
+      this.token = kc.token!;
+      this.username = kc.tokenParsed?.preferred_username || '';
     }
   },
   // Data persistence destination
