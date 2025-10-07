@@ -1,15 +1,16 @@
 /* eslint-disable prettier/prettier */
 import axios from 'axios';
-import { getKeycloak } from '@/security/keycloak';
+import { useUserStore } from '@/store';
 
 const api = axios.create({});
 
 api.interceptors.request.use(
   (config) => {
-    const kc = getKeycloak();
-    if (kc && kc.token) {
+    const userStore = useUserStore();
+    const token = userStore.getAccessToken;
+    if (token) {
       config.headers = config.headers ?? {};
-      config.headers.Authorization = `Bearer ${kc.token}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },

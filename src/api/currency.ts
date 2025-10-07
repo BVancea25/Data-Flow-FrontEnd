@@ -5,11 +5,12 @@ const baseUrl = import.meta.env.VITE_DATA_INGESTION_SERVICE_HOST;
 
 export interface ICurrency {
   code: string;
-
-  id: string;
+  name: string;
 }
 
 export async function searchCurrenciesByCode(query: string): Promise<ICurrency[]> {
-  const { data } = await api.get(baseUrl + `/currency/code/${query}`);
+  const { data } = await api.get(baseUrl + '/currencies', {
+    params: { search: query }
+  });
   return data;
 }

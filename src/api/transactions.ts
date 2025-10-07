@@ -30,3 +30,8 @@ export async function deleteTransactions(ids: string[]) {
   });
   return data;
 }
+
+export async function createTransaction(transaction: Partial<ITransaction>) {
+  const { data } = await api.post(dataIngestionBaseUrl + '/transaction', [transaction]);
+  return data;
+}

@@ -3,11 +3,13 @@ import { ref, reactive, onMounted } from 'vue';
 import { fetchTransactions, deleteTransactions } from '@/api/transactions';
 import type { ITransaction } from '@/api/type';
 import type { TransactionPage } from '@/api/transactions';
+import TransactionForm from '../forms/TransactionForm.vue';
 
 const transactions = ref<ITransaction[]>([]);
 const totalItems = ref(0);
 const loading = ref(false);
 const showFilters = ref(true);
+const showAddDialog = ref(false);
 
 const selected = ref<ITransaction[]>([]);
 
@@ -89,7 +91,10 @@ onMounted(loadTransactions);
       <VCol cols="12">
         <VCard>
           <VCardTitle>Your Transactions</VCardTitle>
-
+          <VBtn color="error" :disabled="!selected.length" @click="handleBulkDelete" style="margin-left: 15px">
+            Delete Selected
+          </VBtn>
+          <VBtn color="success" @click="showAddDialog = true" style="margin-left: 15px">Add Transaction</VBtn>
           <!-- 🔍 FILTER TOOLBAR -->
           <VToolbar color="transparent" flat>
             <VTextField
@@ -167,7 +172,6 @@ onMounted(loadTransactions);
           <VDivider />
 
           <VCardText>
-            <VBtn color="error" :disabled="!selected.length" @click="handleBulkDelete"> Delete Selected </VBtn>
             <VDataTableServer
               v-model:items-per-page="options.itemsPerPage"
               v-model:page="options.page"
@@ -194,5 +198,7 @@ onMounted(loadTransactions);
         </VCard>
       </VCol>
     </VRow>
+
+    <TransactionForm :show="showAddDialog" @close="showAddDialog = false" @saved="loadTransactions" />
   </section>
 </template>
