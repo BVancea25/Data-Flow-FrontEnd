@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
-import type { ITransaction } from '@/api/type';
-import { createTransaction } from '@/api/transactions';
+import type { IIncome } from '@/api/type';
+import { createTransaction } from '@/api/income';
 import { VAutocomplete, VTextField } from 'vuetify/components';
 import { ICurrency, searchCurrenciesByCode } from '@/api/currency';
 
 interface Props {
   show: boolean;
+  transaction?: IIncome | null;
 }
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'saved']);
@@ -14,7 +15,7 @@ const emit = defineEmits(['close', 'saved']);
 const formRef = ref();
 const formValid = ref(false);
 
-const transaction = reactive<Partial<ITransaction>>({
+const income = reactive<Partial<IIncome>>({
   category: '',
   description: '',
   amount: 0,
@@ -42,16 +43,35 @@ watch(currencySearch, async (newQuery) => {
   }
 });
 
+watch(
+  () => props.transaction,
+  (newVal) => {
+    if (newVal) {
+      Object.assign(income, newVal); // ✅ correctly populate reactive object
+    } else {
+      Object.assign(income, {
+        category: '',
+        description: '',
+        amount: 0,
+        currencyCode: '',
+        paymentMode: '',
+        transactionDate: ''
+      });
+    }
+  },
+  { immediate: true }
+);
+
 async function handleSubmit() {
   const form = formRef.value as any;
   if (!(await form.validate())) return;
 
   try {
-    await createTransaction(transaction);
+    await createTransaction(income);
     emit('saved');
     emit('close');
   } catch (err) {
-    console.error('Failed to create transaction:', err);
+    console.error('Failed to create income transaction:', err);
   }
 }
 </script>
@@ -59,26 +79,26 @@ async function handleSubmit() {
 <template>
   <VDialog v-model="props.show" max-width="600">
     <VCard>
-      <VCardTitle>Add New Transaction</VCardTitle>
+      <VCardTitle>Add New Income Transaction</VCardTitle>
       <VCardText>
         <VForm ref="formRef" v-model="formValid">
           <VTextField
             class="form-field"
-            v-model="transaction.category"
+            v-model="income.category"
             label="Category"
             :rules="[(v) => !!v || 'Required']"
           />
-          <VTextField class="form-field" v-model="transaction.description" label="Description" />
+          <VTextField class="form-field" v-model="income.description" label="Description" />
           <VTextField
             class="form-field"
-            v-model.number="transaction.amount"
+            v-model.number="income.amount"
             label="Amount"
             type="number"
             :rules="[(v) => v > 0 || 'Must be > 0']"
           />
           <VAutocomplete
             class="form-field"
-            v-model="transaction.currencyCode"
+            v-model="income.currencyCode"
             v-model:search="currencySearch"
             :items="currencyItems"
             :loading="loadingCurrencies"
@@ -90,8 +110,8 @@ async function handleSubmit() {
             hide-details
             no-filter
           />
-          <VTextField class="form-field" v-model="transaction.paymentMode" label="Payment Mode" />
-          <VTextField v-model="transaction.transactionDate" label="Transaction Date" type="datetime-local" />
+          <VTextField class="form-field" v-model="income.paymentMode" label="Payment Mode" />
+          <VTextField v-model="income.transactionDate" label="Transaction Date" type="datetime-local" />
         </VForm>
       </VCardText>
       <VCardActions>

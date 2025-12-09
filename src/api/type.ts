@@ -43,7 +43,7 @@ export interface IUser {
   access_token?: string;
 }
 
-export interface ITransaction {
+export interface IIncome {
   id: string;
   transactionDate: string;
   category: string;

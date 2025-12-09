@@ -1,17 +1,19 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
-import { fetchTransactions, deleteTransactions } from '@/api/transactions';
-import type { ITransaction } from '@/api/type';
-import type { TransactionPage } from '@/api/transactions';
+import { fetchTransactions, deleteTransactions } from '@/api/income';
+import type { IIncome } from '@/api/type';
+import type { IncomePage } from '@/api/income';
 import TransactionForm from '../forms/TransactionForm.vue';
 
-const transactions = ref<ITransaction[]>([]);
+const transactions = ref<IIncome[]>([]);
 const totalItems = ref(0);
 const loading = ref(false);
 const showFilters = ref(true);
 const showAddDialog = ref(false);
+const showEditDialog = ref(false);
+const editingTransaction = ref<IIncome | null>(null);
 
-const selected = ref<ITransaction[]>([]);
+const selected = ref<IIncome[]>([]);
 
 const options = reactive({
   page: 1,
@@ -36,18 +38,27 @@ const headers = [
   { title: 'Amount', key: 'amount', sortable: true },
   { title: 'Currency', key: 'currencyCode', sortable: true },
   { title: 'Payment Mode', key: 'paymentMode', sortable: true },
-  { title: 'Created At', key: 'createdAt', sortable: true }
+  { title: 'Created At', key: 'createdAt', sortable: true },
+  { title: '', key: 'action', sortable: false }
 ];
 
 async function handleBulkDelete() {
-  const ids = selected.value.map((t) => t);
+  const ids = selected.value.map((t) => t.id);
   console.log(ids);
   if (!ids.length) return;
-  if (confirm(`Delete ${ids.length} transactions?`)) {
+  if (confirm(`Delete ${ids.length} income transactions?`)) {
     await deleteTransactions(ids);
     selected.value = [];
     await loadTransactions();
   }
+}
+
+async function handleEdit(item: IIncome) {
+  const income = item ?? transactions.value.find((t) => t.id === selected.value[0].id) ?? null;
+  if (!income) return;
+  console.log(transactions.value.find((t) => t.id === selected.value[0].id));
+  editingTransaction.value = { ...income };
+  showEditDialog.value = true;
 }
 
 async function loadTransactions() {
@@ -55,7 +66,7 @@ async function loadTransactions() {
   //console.log(filters.paymentMode);
   try {
     const sortOption = options.sortBy?.[0] || { key: 'transactionDate', order: 'desc' };
-    const resp: TransactionPage = await fetchTransactions({
+    const resp: IncomePage = await fetchTransactions({
       page: options.page - 1, // backend 0-based
       size: options.itemsPerPage,
       sortBy: sortOption.key,
@@ -90,11 +101,18 @@ onMounted(loadTransactions);
     <VRow>
       <VCol cols="12">
         <VCard>
-          <VCardTitle>Your Transactions</VCardTitle>
+          <VCardTitle>Your Income Transactions</VCardTitle>
           <VBtn color="error" :disabled="!selected.length" @click="handleBulkDelete" style="margin-left: 15px">
-            Delete Selected
+            Delete selected
           </VBtn>
-          <VBtn color="success" @click="showAddDialog = true" style="margin-left: 15px">Add Transaction</VBtn>
+          <VBtn color="success" @click="showAddDialog = true" style="margin-left: 15px">Add Income Transaction</VBtn>
+          <VBtn
+            color="primary"
+            @click="handleEdit(selected[0])"
+            style="margin-left: 15px"
+            :disabled="selected.length !== 1"
+            >Edit</VBtn
+          >
           <!-- 🔍 FILTER TOOLBAR -->
           <VToolbar color="transparent" flat>
             <VTextField
@@ -181,13 +199,17 @@ onMounted(loadTransactions);
               :items="transactions"
               :items-length="totalItems"
               :loading="loading"
-              item-value="id"
+              return-object
               hover
               show-select
               @update:options="loadTransactions"
             >
               <template #item.amount="{ item }">
                 {{ item.amount.toFixed(2) }}
+              </template>
+
+              <template #item.action="{ item }">
+                <VBtn icon="mdi-pencil-outline" variant="plain" density="compact" @click.stop="handleEdit(item)" />
               </template>
 
               <template #item.transactionDate="{ item }">
@@ -200,5 +222,12 @@ onMounted(loadTransactions);
     </VRow>
 
     <TransactionForm :show="showAddDialog" @close="showAddDialog = false" @saved="loadTransactions" />
+    <TransactionForm
+      :income="editingTransaction"
+      :show="showEditDialog"
+      :transaction="editingTransaction"
+      @close="showEditDialog = false"
+      @saved="loadTransactions"
+    />
   </section>
 </template>
