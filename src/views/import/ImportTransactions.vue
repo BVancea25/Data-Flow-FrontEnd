@@ -40,7 +40,7 @@ const uploadFile = async () => {
   }
 
   try {
-    const resp = await api.post(import.meta.env.VITE_DATA_INGESTION_SERVICE_HOST + '/transaction/upload', formData, {
+    const resp = await api.post(import.meta.env.VITE_DATA_INGESTION_SERVICE_HOST + '/income/upload', formData, {
       Headers: { 'Content-Type': 'multipart/form-data' }
     });
     successMessage.value = 'File uploaded successfully! The import process has started.';

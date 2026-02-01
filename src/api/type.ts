@@ -52,6 +52,7 @@ export interface IIncome {
   currencyCode: string;
   paymentMode: string;
   createdAt: string;
+  type: string;
 }
 
 export interface ICalendarEvent {

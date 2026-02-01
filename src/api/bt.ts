@@ -15,3 +15,7 @@ export async function getConsent(): Promise<void> {
 
   return data;
 }
+
+export async function refreshTransactions(): Promise<void> {
+  await api.post(baseUrl + '/bt/data_refresh');
+}

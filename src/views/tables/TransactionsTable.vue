@@ -4,6 +4,8 @@ import { fetchTransactions, deleteTransactions } from '@/api/income';
 import type { IIncome } from '@/api/type';
 import type { IncomePage } from '@/api/income';
 import TransactionForm from '../forms/TransactionForm.vue';
+import formatEnum from '../../utils/formatters';
+import { typeOptions } from '@/utils/constants';
 
 const transactions = ref<IIncome[]>([]);
 const totalItems = ref(0);
@@ -28,7 +30,8 @@ const filters = reactive({
   paymentMode: '',
   description: '',
   startDate: '',
-  endDate: ''
+  endDate: '',
+  type: ''
 });
 
 const headers = [
@@ -39,6 +42,7 @@ const headers = [
   { title: 'Currency', key: 'currencyCode', sortable: true },
   { title: 'Payment Mode', key: 'paymentMode', sortable: true },
   { title: 'Created At', key: 'createdAt', sortable: true },
+  { title: 'Type', key: 'type', sortable: false },
   { title: '', key: 'action', sortable: false }
 ];
 
@@ -63,7 +67,7 @@ async function handleEdit(item: IIncome) {
 
 async function loadTransactions() {
   loading.value = true;
-  //console.log(filters.paymentMode);
+  console.log(filters);
   try {
     const sortOption = options.sortBy?.[0] || { key: 'transactionDate', order: 'desc' };
     const resp: IncomePage = await fetchTransactions({
@@ -183,6 +187,16 @@ onMounted(loadTransactions);
                     density="compact"
                   />
                 </VCol>
+                <VCol cols="12" md="2">
+                  <VSelect
+                    v-model="filters.type"
+                    type=""
+                    label="Type"
+                    variant="outlined"
+                    density="compact"
+                    :items="typeOptions"
+                  />
+                </VCol>
               </VRow>
             </VSheet>
           </VExpandTransition>
@@ -214,6 +228,12 @@ onMounted(loadTransactions);
 
               <template #item.transactionDate="{ item }">
                 {{ new Date(item.transactionDate).toLocaleString() }}
+              </template>
+
+              <template #item.type="{ item }">
+                <VChip :color="item.type === 'INCOME' ? 'success' : 'error'" variant="flat" size="small">
+                  {{ formatEnum(item.type) }}
+                </VChip>
               </template>
             </VDataTableServer>
           </VCardText>

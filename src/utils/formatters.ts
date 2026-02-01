@@ -15,6 +15,10 @@ export const kFormatter = (num: number) => {
     : Math.abs(num).toFixed(0).replace(regex, ',');
 };
 
+export default function formatEnum(value?: string) {
+  return value ? value[0] + value.slice(1).toLowerCase() : '';
+}
+
 /**
  * Format and return date in Humanize format
  * Intl docs: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Intl/DateTimeFormat/format

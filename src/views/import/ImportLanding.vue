@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { VCardActions, VCardText } from 'vuetify/components';
-import { createConsent, getConsent } from '@/api/bt';
+import { refreshTransactions, createConsent, getConsent } from '@/api/bt';
 import { ref, onMounted } from 'vue';
 
 const router = useRouter();
@@ -36,7 +36,9 @@ onMounted(async () => {
       <VCardActions>
         <!-- If consent is valid: show "Connected" -->
         <VChip v-if="consentStatus === 'valid'" color="green" class="text-white"> Connected </VChip>
-
+        <VBtn v-if="consentStatus === 'valid'" color="info" @click.stop="refreshTransactions()">
+          Refresh your transactions
+        </VBtn>
         <!-- If not valid/expired/null: show Connect button -->
         <VBtn v-else color="primary" @click.stop="createConsent()"> Connect </VBtn>
       </VCardActions>

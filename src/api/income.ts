@@ -32,6 +32,6 @@ export async function deleteTransactions(ids: string[]) {
 }
 
 export async function createTransaction(income: Partial<IIncome>) {
-  const { data } = await api.post(dataIngestionBaseUrl + '/incomes', [income]);
+  const { data } = await api.post(dataIngestionBaseUrl + '/income', [income]);
   return data;
 }

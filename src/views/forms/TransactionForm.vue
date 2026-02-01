@@ -4,6 +4,7 @@ import type { IIncome } from '@/api/type';
 import { createTransaction } from '@/api/income';
 import { VAutocomplete, VTextField } from 'vuetify/components';
 import { ICurrency, searchCurrenciesByCode } from '@/api/currency';
+import { typeOptions } from '@/utils/constants';
 
 interface Props {
   show: boolean;
@@ -21,7 +22,8 @@ const income = reactive<Partial<IIncome>>({
   amount: 0,
   currencyCode: '',
   paymentMode: '',
-  transactionDate: ''
+  transactionDate: '',
+  type: ''
 });
 
 const currencySearch = ref('');
@@ -55,7 +57,8 @@ watch(
         amount: 0,
         currencyCode: '',
         paymentMode: '',
-        transactionDate: ''
+        transactionDate: '',
+        type: ''
       });
     }
   },
@@ -111,7 +114,14 @@ async function handleSubmit() {
             no-filter
           />
           <VTextField class="form-field" v-model="income.paymentMode" label="Payment Mode" />
-          <VTextField v-model="income.transactionDate" label="Transaction Date" type="datetime-local" />
+          <VTextField
+            class="form-field"
+            v-model="income.transactionDate"
+            label="Transaction Date"
+            type="datetime-local"
+          />
+
+          <VSelect v-model="income.type" label="Type" class="form-field" :items="typeOptions" />
         </VForm>
       </VCardText>
       <VCardActions>
