@@ -1,13 +1,16 @@
 <script lang="ts" setup>
 import { ref, reactive, onMounted } from 'vue';
 import { fetchTransactions, deleteTransactions } from '@/api/income';
+import { fetchCategories } from '@/api/category';
+import type { Category } from '@/api/category';
 import type { IIncome } from '@/api/type';
 import type { IncomePage } from '@/api/income';
 import TransactionForm from '../forms/TransactionForm.vue';
 import formatEnum from '../../utils/formatters';
-import { typeOptions } from '@/utils/constants';
+import { typeOptions, paymentModeOptions } from '@/utils/constants';
 
 const transactions = ref<IIncome[]>([]);
+const categories = ref<Category[]>([]);
 const totalItems = ref(0);
 const loading = ref(false);
 const showFilters = ref(true);
@@ -36,7 +39,7 @@ const filters = reactive({
 
 const headers = [
   { title: 'Date', key: 'transactionDate', sortable: true },
-  { title: 'Category', key: 'category', sortable: true },
+  { title: 'Category', key: 'categoryName', sortable: true },
   { title: 'Description', key: 'description' },
   { title: 'Amount', key: 'amount', sortable: true },
   { title: 'Currency', key: 'currencyCode', sortable: true },
@@ -62,6 +65,11 @@ async function handleEdit(item: IIncome) {
   if (!income) return;
   console.log(transactions.value.find((t) => t.id === selected.value[0].id));
   editingTransaction.value = { ...income };
+  showEditDialog.value = true;
+}
+
+function handleEditRow(item: any) {
+  editingTransaction.value = { ...item };
   showEditDialog.value = true;
 }
 
@@ -97,7 +105,10 @@ function handleResetFilters() {
   handleApplyFilters();
 }
 
-onMounted(loadTransactions);
+onMounted(async () => {
+  loadTransactions();
+  categories.value = await fetchCategories();
+});
 </script>
 
 <template>
@@ -143,8 +154,11 @@ onMounted(loadTransactions);
             <VSheet v-show="showFilters" color="#FBFBFB" class="pa-4">
               <VRow>
                 <VCol cols="12" md="3">
-                  <VTextField
+                  <VSelect
                     v-model="filters.category"
+                    :items="categories"
+                    item-title="name"
+                    item-value="id"
                     label="Category"
                     variant="outlined"
                     density="compact"
@@ -161,12 +175,13 @@ onMounted(loadTransactions);
                   />
                 </VCol>
                 <VCol cols="12" md="3">
-                  <VTextField
+                  <VSelect
                     v-model="filters.paymentMode"
                     label="Payment Mode"
                     variant="outlined"
                     density="compact"
                     clearable
+                    :items="paymentModeOptions"
                   />
                 </VCol>
                 <VCol cols="12" md="2">
@@ -194,6 +209,7 @@ onMounted(loadTransactions);
                     label="Type"
                     variant="outlined"
                     density="compact"
+                    clearable
                     :items="typeOptions"
                   />
                 </VCol>
@@ -223,11 +239,15 @@ onMounted(loadTransactions);
               </template>
 
               <template #item.action="{ item }">
-                <VBtn icon="mdi-pencil-outline" variant="plain" density="compact" @click.stop="handleEdit(item)" />
+                <VBtn icon="mdi-pencil-outline" variant="plain" density="compact" @click.stop="handleEditRow(item)" />
               </template>
 
               <template #item.transactionDate="{ item }">
                 {{ new Date(item.transactionDate).toLocaleString() }}
+              </template>
+
+              <template #item.paymentMode="{ item }">
+                {{ formatEnum(item.paymentMode) }}
               </template>
 
               <template #item.type="{ item }">

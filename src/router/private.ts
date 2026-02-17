@@ -19,9 +19,14 @@ const PrivateRoutes = {
       component: () => import('@/views/import/ImportTransactions.vue')
     },
     {
-      path: 'list/income',
-      name: 'Income Transaction List',
+      path: 'list/transactions',
+      name: 'Transaction List',
       component: () => import('@/views/tables/TransactionsTable.vue')
+    },
+    {
+      path: 'list/categories',
+      name: 'Categories',
+      component: () => import('@/views/tables/CategoriesTable.vue')
     },
     {
       name: 'Dashboard',

@@ -46,7 +46,7 @@ export interface IUser {
 export interface IIncome {
   id: string;
   transactionDate: string;
-  category: string;
+  categoryId: string;
   description: string;
   amount: number;
   currencyCode: string;

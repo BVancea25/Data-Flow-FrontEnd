@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
 import type { IIncome } from '@/api/type';
+import { fetchCategories } from '@/api/category';
+import type { Category } from '@/api/category';
 import { createTransaction } from '@/api/income';
 import { VAutocomplete, VTextField } from 'vuetify/components';
 import { ICurrency, searchCurrenciesByCode } from '@/api/currency';
-import { typeOptions } from '@/utils/constants';
+import { typeOptions, paymentModeOptions } from '@/utils/constants';
 
 interface Props {
   show: boolean;
@@ -17,7 +19,7 @@ const formRef = ref();
 const formValid = ref(false);
 
 const income = reactive<Partial<IIncome>>({
-  category: '',
+  categoryId: '',
   description: '',
   amount: 0,
   currencyCode: '',
@@ -29,6 +31,8 @@ const income = reactive<Partial<IIncome>>({
 const currencySearch = ref('');
 const currencyItems = ref<ICurrency[]>([]);
 const loadingCurrencies = ref(false);
+const categories = ref<Category[]>([]);
+const loadingCategories = ref(false);
 
 watch(currencySearch, async (newQuery) => {
   if (!newQuery || newQuery.length < 1) {
@@ -52,7 +56,7 @@ watch(
       Object.assign(income, newVal); // ✅ correctly populate reactive object
     } else {
       Object.assign(income, {
-        category: '',
+        categoryId: '',
         description: '',
         amount: 0,
         currencyCode: '',
@@ -60,6 +64,21 @@ watch(
         transactionDate: '',
         type: ''
       });
+    }
+  },
+  { immediate: true }
+);
+
+watch(
+  () => income.type,
+  async () => {
+    loadingCategories.value = true;
+    try {
+      categories.value = await fetchCategories();
+    } catch (err) {
+      console.error('Failed to fetch categories:', err);
+    } finally {
+      loadingCategories.value = false;
     }
   },
   { immediate: true }
@@ -85,11 +104,17 @@ async function handleSubmit() {
       <VCardTitle>Add New Income Transaction</VCardTitle>
       <VCardText>
         <VForm ref="formRef" v-model="formValid">
-          <VTextField
+          <VSelect v-model="income.type" label="Type" class="form-field" :items="typeOptions" />
+          <VAutocomplete
             class="form-field"
-            v-model="income.category"
+            v-model="income.categoryId"
+            :items="categories"
+            :loading="loadingCategories"
+            item-title="name"
+            item-value="id"
             label="Category"
             :rules="[(v) => !!v || 'Required']"
+            clearable
           />
           <VTextField class="form-field" v-model="income.description" label="Description" />
           <VTextField
@@ -113,15 +138,13 @@ async function handleSubmit() {
             hide-details
             no-filter
           />
-          <VTextField class="form-field" v-model="income.paymentMode" label="Payment Mode" />
+          <VSelect class="form-field" v-model="income.paymentMode" :items="paymentModeOptions" label="Payment Mode" />
           <VTextField
             class="form-field"
             v-model="income.transactionDate"
             label="Transaction Date"
             type="datetime-local"
           />
-
-          <VSelect v-model="income.type" label="Type" class="form-field" :items="typeOptions" />
         </VForm>
       </VCardText>
       <VCardActions>

@@ -18,14 +18,24 @@ const items = [
     value: '/import'
   },
   {
-    title: t('Income'),
+    title: t('Transactions'),
     props: {
       prependIcon: 'mdi-currency-usd',
       link: true,
-      to: '/list/income',
+      to: '/list/transactions',
       exact: true
     },
-    value: '/list/income'
+    value: '/list/transactions'
+  },
+  {
+    title: t('Categories'),
+    props: {
+      prependIcon: 'mdi-widgets-outline',
+      link: true,
+      to: '/list/categories',
+      exact: true
+    },
+    value: '/list/categories'
   },
   { type: 'subheader', title: t('apps') },
   {
