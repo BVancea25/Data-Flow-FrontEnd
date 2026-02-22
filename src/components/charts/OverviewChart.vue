@@ -1,16 +1,55 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useTheme } from 'vuetify';
+import { fetchOverview } from '@/api/dashboard';
+import type { DashboardFilter, OverviewPoint } from '@/types/dashboard';
+
+interface Props {
+  filters: DashboardFilter;
+}
+
+const props = defineProps<Props>();
+
 const theme = useTheme();
 const primary = theme.current.value.colors.primary;
 const secondary = theme.current.value.colors.warning;
-const select = ref('March 2023');
-const items = ref(['March 2023', 'April 2023', 'May 2023']);
+
+const overviewData = ref<OverviewPoint[]>([]);
+const loading = ref(false);
+
+async function loadData() {
+  loading.value = true;
+  try {
+    overviewData.value = await fetchOverview(props.filters);
+    console.log(overviewData.value);
+  } finally {
+    loading.value = false;
+  }
+}
+
+watch(
+  () => [
+    props.filters.from,
+    props.filters.to,
+    props.filters.timeMeasure,
+    props.filters.paymentMethod,
+    props.filters.categoryId,
+    props.filters.type
+  ],
+  loadData
+);
+
+onMounted(loadData);
+
 const chartOptions = computed(() => {
+  const categories = overviewData.value.map((d) => d.label);
+  const income = overviewData.value.map((d) => d.income);
+  const expense = overviewData.value.map((d) => d.expense);
+
   return {
     series: [
-      { name: 'Earnings this month:', data: [355, 390, 300, 350, 390, 180, 355, 390] },
-      { name: 'Expense this month:', data: [280, 250, 325, 215, 250, 310, 280, 250] }
+      { name: 'Income', data: income },
+      { name: 'Expense', data: expense }
     ],
     chartOptions: {
       grid: {
@@ -40,7 +79,7 @@ const chartOptions = computed(() => {
       legend: { show: false },
       xaxis: {
         type: 'category',
-        categories: ['16/08', '17/08', '18/08', '19/08', '20/08', '21/08', '22/08', '23/08'],
+        categories: categories,
         labels: {
           style: { cssClass: 'grey--text lighten-2--text fill-color' }
         }
@@ -48,8 +87,6 @@ const chartOptions = computed(() => {
       yaxis: {
         show: true,
         min: 0,
-        max: 400,
-        tickAmount: 4,
         labels: {
           style: {
             cssClass: 'grey--text lighten-2--text fill-color'
@@ -82,18 +119,10 @@ const chartOptions = computed(() => {
 </script>
 <template>
   <VCard>
-    <VCardItem>
-      <div class="d-sm-flex align-center justify-space-between">
-        <div>
-          <VCardTitle class="text-h5">{{ $t('sales_overview') }}</VCardTitle>
-        </div>
-        <div class="my-sm-0 my-2">
-          <VSelect v-model="select" :items="items" variant="outlined" density="compact" hide-details></VSelect>
-        </div>
-      </div>
-      <div class="mt-6">
-        <apexchart type="bar" height="342px" :options="chartOptions.chartOptions" :series="chartOptions.series" />
-      </div>
-    </VCardItem>
+    <VCardTitle>Overview</VCardTitle>
+
+    <VCardText>
+      <apexchart type="bar" height="350" :options="chartOptions.chartOptions" :series="chartOptions.series" />
+    </VCardText>
   </VCard>
 </template>

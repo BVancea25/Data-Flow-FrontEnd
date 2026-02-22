@@ -1,3 +1,23 @@
+//time measure type
+export type TimeMeasure = 'DAY' | 'MONTH' | 'YEAR';
+
+//dashboard filter object
+export interface DashboardFilter {
+  from: string | null;
+  to: string | null;
+  timeMeasure: TimeMeasure;
+  paymentMethod: string | null;
+  categoryId: string | null;
+  type: 'INCOME' | 'EXPENSE' | null;
+}
+
+//overview chart data point
+export interface OverviewPoint {
+  label: string;
+  income: number;
+  expense: number;
+}
+
 /*Recent Transaction*/
 type recentTrans = {
   title: string;
