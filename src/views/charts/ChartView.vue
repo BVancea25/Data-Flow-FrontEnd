@@ -1,14 +1,4 @@
 <script setup lang="ts">
-import ApexChartAreaChart from '@/components/charts/apex-chart/ApexChartAreaChart.vue';
-import ApexChartBalance from '@/components/charts/apex-chart/ApexChartBalance.vue';
-import ApexChartDailySalesStates from '@/components/charts/apex-chart/ApexChartDailySalesStates.vue';
-import ApexChartDataScience from '@/components/charts/apex-chart/ApexChartDataScience.vue';
-import ApexChartExpenseRatio from '@/components/charts/apex-chart/ApexChartExpenseRatio.vue';
-import ApexChartHorizontalBar from '@/components/charts/apex-chart/ApexChartHorizontalBar.vue';
-import ApexChartMobileComparison from '@/components/charts/apex-chart/ApexChartMobileComparison.vue';
-import ApexChartNewTechnologiesData from '@/components/charts/apex-chart/ApexChartNewTechnologiesData.vue';
-import ApexChartStatistics from '@/components/charts/apex-chart/ApexChartStatistics.vue';
-import ApexChartStocksPrices from '@/components/charts/apex-chart/ApexChartStocksPrices.vue';
 import AppDateTimePicker from '@/components/AppDateTimePicker.vue';
 </script>
 

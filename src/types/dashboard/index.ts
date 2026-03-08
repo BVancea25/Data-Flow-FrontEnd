@@ -8,6 +8,7 @@ export interface DashboardFilter {
   timeMeasure: TimeMeasure;
   paymentMethod: string | null;
   categoryId: string | null;
+  currencyCode: string | null;
   type: 'INCOME' | 'EXPENSE' | null;
 }
 
@@ -16,6 +17,29 @@ export interface OverviewPoint {
   label: string;
   income: number;
   expense: number;
+}
+
+export interface Kpis {
+  income: number;
+  expenses: number;
+  net: number;
+  savingsRate: number;
+}
+
+export interface CategoryBreakdownPoint {
+  label: string;
+  value: number;
+}
+
+export interface CategoryComparisonPoint {
+  type: 'INCOME' | 'EXPENSE';
+  category: string;
+  total: number;
+}
+
+export interface PaymentMethodBreakdownPoint {
+  paymentMethod: string;
+  total: number;
 }
 
 /*Recent Transaction*/

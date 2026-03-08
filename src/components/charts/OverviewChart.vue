@@ -34,7 +34,8 @@ watch(
     props.filters.timeMeasure,
     props.filters.paymentMethod,
     props.filters.categoryId,
-    props.filters.type
+    props.filters.type,
+    props.filters.currencyCode
   ],
   loadData
 );
@@ -87,6 +88,7 @@ const chartOptions = computed(() => {
       yaxis: {
         show: true,
         min: 0,
+        max: (max) => (max > 0 ? max : 100),
         labels: {
           style: {
             cssClass: 'grey--text lighten-2--text fill-color'
