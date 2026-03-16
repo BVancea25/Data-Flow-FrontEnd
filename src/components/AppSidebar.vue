@@ -37,9 +37,9 @@ const items = [
     },
     value: '/list/categories'
   },
-  { type: 'subheader', title: t('apps') },
+  { type: 'subheader', title: t('BI') },
   {
-    title: t('dashboard'),
+    title: t('Dashboard'),
     props: {
       prependIcon: 'mdi-view-dashboard-outline',
       link: true,
@@ -49,89 +49,14 @@ const items = [
     value: '/'
   },
   {
-    title: t('chat'),
+    title: t('budgets'),
     props: {
-      prependIcon: 'mdi-chat-outline',
+      prependIcon: 'mdi-cash',
       link: true,
-      to: '/chat',
+      to: '/budgets',
       exact: true
     },
-    value: '/chat'
-  },
-  {
-    title: t('calendar'),
-    props: {
-      prependIcon: 'mdi-calendar-blank-outline',
-      link: true,
-      to: '/calendar',
-      exact: true
-    },
-    value: '/calendar'
-  },
-  { type: 'subheader', title: t('widgets') },
-  {
-    title: t('card'),
-    props: {
-      prependIcon: 'mdi-widgets-outline',
-      link: true,
-      to: '/widget/card',
-      exact: true
-    },
-    value: '/widget/card'
-  },
-  { type: 'subheader', title: t('auth') },
-  {
-    title: t('login'),
-    props: {
-      prependIcon: 'mdi-login-variant',
-      link: true,
-      to: '/auth/login',
-      exact: true
-    },
-    value: '/auth/login'
-  },
-  {
-    title: t('register'),
-    props: {
-      prependIcon: 'mdi-account-arrow-right-outline',
-      link: true,
-      to: '/auth/login',
-      exact: true
-    },
-    value: '/auth/register'
-  },
-  { type: 'subheader', title: t('form') },
-  {
-    title: t('form'),
-    props: {
-      prependIcon: 'mdi-form-textbox',
-      link: true,
-      to: '/form',
-      exact: true
-    },
-    value: '/form'
-  },
-  { type: 'subheader', title: t('table') },
-  {
-    title: t('table'),
-    props: {
-      prependIcon: 'mdi-table',
-      link: true,
-      to: '/user-table',
-      exact: true
-    },
-    value: '/user-table'
-  },
-  { type: 'subheader', title: t('chart') },
-  {
-    title: t('chart'),
-    props: {
-      prependIcon: 'mdi-chart-box-outline',
-      link: true,
-      to: '/chart',
-      exact: true
-    },
-    value: '/chart'
+    value: '/budgets'
   }
 ];
 

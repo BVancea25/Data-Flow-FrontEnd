@@ -128,6 +128,7 @@ async function handleSubmit() {
             class="form-field"
             v-model="income.currencyCode"
             v-model:search="currencySearch"
+            currencyItems
             :items="currencyItems"
             :loading="loadingCurrencies"
             item-title="name"
