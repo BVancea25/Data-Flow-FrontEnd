@@ -6,6 +6,9 @@
         <p class="text-caption text-grey-lighten-1 text-uppercase font-weight-bold tracking-wider">
           {{ item.period?.toLowerCase() }} Budget
         </p>
+        <p class="text-caption text-grey-darken-1 mb-0">
+          Currency: {{ item.currencyCode }}
+        </p>
       </div>
       <VChip :color="statusColor" size="small" label font-weight-bold>
         {{ item.status.replace('_', ' ') }}
@@ -13,8 +16,8 @@
     </div>
 
     <div class="d-flex align-end gap-1 mb-1">
-      <span class="text-h4 font-weight-black text-grey-darken-4">${{ item.spentAmount }}</span>
-      <span class="text-grey-darken-1 text-body-2 mb-1">/ ${{ item.limitAmount }}</span>
+      <span class="text-h4 font-weight-black text-grey-darken-4">{{ item.spentAmount }}</span>
+      <span class="text-grey-darken-1 text-body-2 mb-1">/ {{ item.limitAmount }}</span>
     </div>
 
     <VProgressLinear
@@ -27,7 +30,7 @@
 
     <div class="d-flex justify-space-between text-body-2">
       <span class="text-grey-darken-1">
-        {{ item.remainingAmount > 0 ? `$${item.remainingAmount} left` : 'Limit Reached' }}
+        {{ item.remainingAmount > 0 ? `${item.remainingAmount} left` : 'Limit Reached' }}
       </span>
       <span :class="`text-${statusColor} font-weight-bold`"> {{ item.progressPercentage }}% </span>
     </div>

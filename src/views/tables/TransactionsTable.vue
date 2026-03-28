@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed, watch } from 'vue';
 import { fetchTransactions, deleteTransactions } from '@/api/income';
 import { fetchCategories } from '@/api/category';
 import type { Category } from '@/api/category';
@@ -8,6 +8,7 @@ import type { IncomePage } from '@/api/income';
 import TransactionForm from '../forms/TransactionForm.vue';
 import formatEnum from '../../utils/formatters';
 import { typeOptions, paymentModeOptions } from '@/utils/constants';
+import BulkEditTransactionForm from '../forms/BulkEditTransactionForm.vue';
 
 const transactions = ref<IIncome[]>([]);
 const categories = ref<Category[]>([]);
@@ -16,6 +17,7 @@ const loading = ref(false);
 const showFilters = ref(true);
 const showAddDialog = ref(false);
 const showEditDialog = ref(false);
+const showBulkEditDialog = ref(false);
 const editingTransaction = ref<IIncome | null>(null);
 
 const selected = ref<IIncome[]>([]);
@@ -48,6 +50,21 @@ const headers = [
   { title: 'Type', key: 'type', sortable: false },
   { title: '', key: 'action', sortable: false }
 ];
+
+const filteredCategories = computed(() => {
+  if (!filters.type) return categories.value;
+  return categories.value.filter((category) => category.type === filters.type);
+});
+
+watch(
+  () => filters.type,
+  () => {
+    const hasSelectedCategory = filteredCategories.value.some((category) => category.id === filters.category);
+    if (!hasSelectedCategory) {
+      filters.category = '';
+    }
+  }
+);
 
 async function handleBulkDelete() {
   const ids = selected.value.map((t) => t.id);
@@ -128,6 +145,14 @@ onMounted(async () => {
             :disabled="selected.length !== 1"
             >Edit</VBtn
           >
+          <VBtn
+            color="warning"
+            style="margin-left: 15px"
+            :disabled="selected.length < 2"
+            @click="showBulkEditDialog = true"
+          >
+            Bulk Edit
+          </VBtn>
           <!-- 🔍 FILTER TOOLBAR -->
           <VToolbar color="transparent" flat>
             <VTextField
@@ -153,18 +178,6 @@ onMounted(async () => {
           <VExpandTransition>
             <VSheet v-show="showFilters" color="#FBFBFB" class="pa-4">
               <VRow>
-                <VCol cols="12" md="3">
-                  <VSelect
-                    v-model="filters.category"
-                    :items="categories"
-                    item-title="name"
-                    item-value="id"
-                    label="Category"
-                    variant="outlined"
-                    density="compact"
-                    clearable
-                  />
-                </VCol>
                 <VCol cols="12" md="2">
                   <VTextField
                     v-model="filters.currencyCode"
@@ -211,6 +224,19 @@ onMounted(async () => {
                     density="compact"
                     clearable
                     :items="typeOptions"
+                  />
+                </VCol>
+                <VCol cols="12" md="3">
+                  <VSelect
+                    v-model="filters.category"
+                    :items="filteredCategories"
+                    item-title="name"
+                    item-value="id"
+                    label="Category"
+                    variant="outlined"
+                    density="compact"
+                    clearable
+                    :disabled="!filters.type"
                   />
                 </VCol>
               </VRow>
@@ -268,6 +294,17 @@ onMounted(async () => {
       :transaction="editingTransaction"
       @close="showEditDialog = false"
       @saved="loadTransactions"
+    />
+    <BulkEditTransactionForm
+      :show="showBulkEditDialog"
+      :ids="selected.map((t) => t.id)"
+      @close="showBulkEditDialog = false"
+      @saved="
+        () => {
+          loadTransactions();
+          selected = [];
+        }
+      "
     />
   </section>
 </template>

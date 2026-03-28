@@ -2,8 +2,8 @@
 import { ref, reactive, watch } from 'vue';
 import type { IIncome } from '@/api/type';
 import { fetchCategories } from '@/api/category';
-import type { Category } from '@/api/category';
-import { createTransaction } from '@/api/income';
+import type { Category, TransactionType } from '@/api/category';
+import { createTransaction, updateTransaction } from '@/api/income';
 import { VAutocomplete, VTextField } from 'vuetify/components';
 import { ICurrency, searchCurrenciesByCode } from '@/api/currency';
 import { typeOptions, paymentModeOptions } from '@/utils/constants';
@@ -71,10 +71,15 @@ watch(
 
 watch(
   () => income.type,
-  async () => {
+  async (selectedType) => {
     loadingCategories.value = true;
     try {
-      categories.value = await fetchCategories();
+      const type = selectedType as TransactionType | '';
+      categories.value = await fetchCategories(type ? { type } : undefined);
+      const hasSelectedCategory = categories.value.some((category) => category.id === income.categoryId);
+      if (!hasSelectedCategory) {
+        income.categoryId = '';
+      }
     } catch (err) {
       console.error('Failed to fetch categories:', err);
     } finally {
@@ -89,7 +94,11 @@ async function handleSubmit() {
   if (!(await form.validate())) return;
 
   try {
-    await createTransaction(income);
+    if (props.transaction) {
+      await updateTransaction(income);
+    } else {
+      await createTransaction(income);
+    }
     emit('saved');
     emit('close');
   } catch (err) {
@@ -101,7 +110,7 @@ async function handleSubmit() {
 <template>
   <VDialog v-model="props.show" max-width="600">
     <VCard>
-      <VCardTitle>Add New Income Transaction</VCardTitle>
+      <VCardTitle>{{ props.transaction ? 'Edit Transaction' : 'Add New Income Transaction' }}</VCardTitle>
       <VCardText>
         <VForm ref="formRef" v-model="formValid">
           <VSelect v-model="income.type" label="Type" class="form-field" :items="typeOptions" />
@@ -115,6 +124,7 @@ async function handleSubmit() {
             label="Category"
             :rules="[(v) => !!v || 'Required']"
             clearable
+            :disabled="!income.type"
           />
           <VTextField class="form-field" v-model="income.description" label="Description" />
           <VTextField

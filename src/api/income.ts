@@ -1,5 +1,5 @@
 import api from '@/api/axios';
-import { IIncome } from './type';
+import { IIncome, UpdateIncome } from './type';
 
 export interface IncomeQuery {
   page?: number;
@@ -33,5 +33,15 @@ export async function deleteTransactions(ids: string[]) {
 
 export async function createTransaction(income: Partial<IIncome>) {
   const { data } = await api.post(dataIngestionBaseUrl + '/income', [income]);
+  return data;
+}
+
+export async function updateTransaction(income: Partial<IIncome>) {
+  const { data } = await api.put(dataIngestionBaseUrl + '/income', income);
+  return data;
+}
+
+export async function updateTransactions(incomeUpdate: UpdateIncome) {
+  const { data } = await api.put(dataIngestionBaseUrl + '/incomes', incomeUpdate);
   return data;
 }

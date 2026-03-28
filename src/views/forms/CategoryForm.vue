@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, watch } from 'vue';
 import type { Category } from '@/api/category';
-import { createCategory } from '@/api/category';
+import { createCategory, updateCategory } from '@/api/category';
 import { VTextField } from 'vuetify/components';
 import { typeOptions } from '@/utils/constants';
 
@@ -40,7 +40,11 @@ async function handleSubmit() {
   if (!(await form.validate())) return;
 
   try {
-    await createCategory(category);
+    if (props.category) {
+      await updateCategory(props.category.id, category);
+    } else {
+      await createCategory(category);
+    }
     emit('saved');
     emit('close');
   } catch (err) {

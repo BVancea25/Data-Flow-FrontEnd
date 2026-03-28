@@ -55,6 +55,14 @@ export interface IIncome {
   type: string;
 }
 
+export interface UpdateIncome {
+  ids: string[];
+  categoryId?: string;
+  paymentMode?: string;
+  currencyCode?: string;
+  type?: string;
+}
+
 export interface ICalendarEvent {
   id: string;
   url: string;

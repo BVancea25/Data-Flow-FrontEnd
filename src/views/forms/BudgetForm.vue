@@ -5,12 +5,19 @@ import { fetchCategories } from '@/api/category';
 import { searchCurrenciesByCode } from '@/api/currency';
 import { createBudget, updateBudget } from '@/api/budget';
 import { BudgetPeriod } from '@/types/budget';
+import type { BudgetStatus } from '@/types/budget';
 import type { ICurrency } from '@/api/currency';
 import type { Category } from '@/api/category';
 
+type BudgetFormBudget = BudgetStatus & {
+  id?: string;
+  categoryId?: string;
+  isActive?: boolean;
+};
+
 interface Props {
   show: boolean;
-  budget?: any | null;
+  budget?: BudgetFormBudget | null;
 }
 const props = defineProps<Props>();
 const emit = defineEmits(['close', 'saved']);
@@ -21,7 +28,7 @@ const loadingCurrencies = ref(false);
 const currencySearch = ref('');
 const formRef = ref();
 const formValid = ref(false);
-const isEditMode = computed(() => !!props.budget?.id);
+const isEditMode = computed(() => !!(props.budget?.budgetId || props.budget?.id));
 
 const loadingCategories = ref(false);
 
@@ -51,9 +58,14 @@ watch(
         categories.value = await fetchCategories({ type: 'EXPENSE' });
 
         if (props.budget) {
+          const categoryId =
+            props.budget.categoryId ||
+            categories.value.find((category) => category.name === props.budget?.categoryName)?.id ||
+            '';
+
           // Populating for Update DTO
           Object.assign(budgetData, {
-            categoryId: props.budget.categoryId,
+            categoryId,
             limitAmount: props.budget.limitAmount,
             currencyCode: props.budget.currencyCode,
             period: props.budget.period,
@@ -98,7 +110,9 @@ async function handleSubmit() {
 
   try {
     if (isEditMode.value) {
-      await updateBudget(props.budget.id, {
+      const budgetId = props.budget?.budgetId || props.budget?.id;
+      if (!budgetId) return;
+      await updateBudget(budgetId, {
         limitAmount: budgetData.limitAmount,
         isActive: budgetData.isActive,
         currencyCode: budgetData.currencyCode
