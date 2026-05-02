@@ -15,17 +15,16 @@ const secondary = ref('rgb(var(--v-theme-secondary))');
 
 <template>
   <div style="line-height: 0; color: rgb(var(--v-theme-primary))" class="logo">
-    <svg :height="props.height" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 91.03 61.5">
+    <svg :height="props.height" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72" aria-label="DataFlow logo">
+      <rect x="8" y="8" width="56" height="56" rx="14" :fill="String(primary)" />
       <path
-        d="M71.73,61.5H91L69.16,24.68h-19C57.44,37,64.57,49.15,71.73,61.5Z"
+        d="M21 24h15c8.84 0 16 7.16 16 16v8H37c-8.84 0-16-7.16-16-16v-8Z"
         :fill="String(secondary)"
-        fill-rule="evenodd"
       />
-      <path
-        d="M0,61.09H18.88q18-30.3,36-60.64L54.62,0H36.19Q18.15,30.54,0,61.09ZM45.48,24.68h0Q34.5,43.13,23.57,61.5H42.16c4.19-7,8.37-14.13,12.59-21.21-3.1-5.22-6.16-10.39-9.27-15.61Z"
-        :fill="String(primary)"
-        fill-rule="evenodd"
-      />
+      <path d="M24 24h12c6.63 0 12 5.37 12 12H36c-6.63 0-12-5.37-12-12Z" fill="white" fill-opacity=".92" />
+      <circle cx="24" cy="48" r="4" fill="white" fill-opacity=".92" />
+      <circle cx="36" cy="48" r="4" fill="white" fill-opacity=".92" />
+      <circle cx="48" cy="48" r="4" fill="white" fill-opacity=".92" />
     </svg>
   </div>
 </template>

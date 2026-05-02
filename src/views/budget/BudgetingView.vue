@@ -34,11 +34,7 @@ onMounted(loadBudgets);
 
 <template>
   <VContainer fluid class="pa-6">
-    <div class="d-flex justify-space-between align-center mb-8">
-      <div>
-        <h1 class="text-h3 font-weight-black">Budgeting</h1>
-        <p class="text-subtitle-1 text-grey">Track your spending vs. your goals</p>
-      </div>
+    <div class="d-flex justify-end align-center mb-8">
       <VBtn color="primary" size="large" prepend-icon="mdi-plus" @click="showAddDialog = true"> Set Budget </VBtn>
     </div>
 

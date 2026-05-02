@@ -21,15 +21,19 @@ const category = reactive<Omit<Category, 'id' | 'createdAt'>>({
 });
 
 watch(
-  () => props.category,
-  (newVal) => {
-    if (newVal) {
-      Object.assign(category, newVal); // ✅ correctly populate reactive object
+  () => props.show,
+  (isShowing) => {
+    if (props.category) {
+      Object.assign(category, props.category); // ✅ correctly populate reactive object
     } else {
       Object.assign(category, {
         name: '',
         type: undefined
       });
+    }
+
+    if (formRef.value) {
+      formRef.value.resetValidation();
     }
   },
   { immediate: true }
@@ -60,7 +64,7 @@ async function handleSubmit() {
       <VCardText>
         <VForm ref="formRef" v-model="formValid">
           <VTextField class="form-field" v-model="category.name" label="Name" :rules="[(v) => !!v || 'Required']" />
-          <VSelect class="form-field" v-model="category.type" :items="typeOptions" label="Payment Mode" />
+          <VSelect class="form-field" v-model="category.type" :items="typeOptions" label="Type" />
         </VForm>
       </VCardText>
       <VCardActions>

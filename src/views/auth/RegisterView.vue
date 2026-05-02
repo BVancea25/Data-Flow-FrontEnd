@@ -10,7 +10,7 @@ import RegisterForm from '@/components/forms/RegisterForm.vue';
           <div class="d-flex justify-center py-4">
             <Logo :height="32" />
           </div>
-          <div class="text-body-1 text-muted text-center mb-3">Vue Material Admin</div>
+          <div class="text-body-1 text-muted text-center mb-3">DataFlow</div>
           <RegisterForm />
           <h5 class="text-muted text-center mt-3">
             {{ $t('have_account') }} ?

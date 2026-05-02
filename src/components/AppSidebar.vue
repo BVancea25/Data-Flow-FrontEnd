@@ -89,7 +89,7 @@ const menus = computed(() => {
   <VNavigationDrawer :rail-width="drawerProps.railWidth" :rail="drawerProps.rail" :border="true" :elevation="1">
     <VToolbar class="px-3" color="transparent">
       <Logo :height="26" />
-      <VToolbarTitle>Materiv</VToolbarTitle>
+      <VToolbarTitle>DataFlow</VToolbarTitle>
     </VToolbar>
     <div class="app-drawer__inner">
       <VList :items="menus" color="primary" class="menu-list" nav :slim="true" />

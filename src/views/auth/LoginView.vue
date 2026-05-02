@@ -11,7 +11,7 @@ import LoginForm from '@/components/forms/LoginForm.vue';
           <div class="d-flex flex-column align-center justify-center py-4">
             <Logo :height="32" />
           </div>
-          <div class="text-body-1 text-muted text-center mb-3">Vue Material Admin</div>
+          <div class="text-body-1 text-muted text-center mb-3">DataFlow</div>
           <LoginForm />
           <div class="d-flex align-center justify-center">
             <a href="/auth/register" class="text-primary text-decoration-none"> {{ $t('Create account') }}</a>

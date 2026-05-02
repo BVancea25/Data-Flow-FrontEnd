@@ -61,8 +61,7 @@ const exportToPdf = async () => {
   <v-container fluid class="pa-6 grey lighten-4">
     <v-row class="mb-4">
       <v-col cols="12">
-        <div class="d-flex align-center justify-space-between mb-4">
-          <h1 class="text-h4 font-weight-bold">Financial Reporting</h1>
+        <div class="d-flex justify-end mb-4">
           <v-btn color="primary" prepend-icon="mdi-download" :loading="isExporting" @click="exportToPdf"
             >Export Report</v-btn
           >

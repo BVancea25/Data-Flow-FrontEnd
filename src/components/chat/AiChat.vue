@@ -1,14 +1,13 @@
 <script setup>
-import { ref, nextTick, watch } from 'vue';
+import { ref, nextTick, watch, onMounted } from 'vue';
 import api from '@/api/axios';
 import { marked } from 'marked';
+import { useChatStore } from '@/store/chatStore';
 
 const baseUrl = import.meta.env.VITE_AI_SERVICE_HOST;
+const chatStore = useChatStore();
 
 const userInput = ref('');
-const messages = ref([
-  { role: 'ai', content: 'Hello! I have access to your budget and transaction history. What would you like to know?' }
-]);
 const isLoading = ref(false);
 const isStreaming = ref(false);
 const chatWindow = ref(null);
@@ -22,17 +21,18 @@ const scrollToBottom = async () => {
   }
 };
 
-watch(messages, () => scrollToBottom(), { deep: true });
+watch(() => chatStore.aiMessages, () => scrollToBottom(), { deep: true });
+onMounted(scrollToBottom);
 
 const handleSendMessage = async () => {
   if (!userInput.value.trim()) return;
 
   const prompt = userInput.value;
-  messages.value.push({ role: 'user', content: prompt });
+  chatStore.addAiMessage({ role: 'user', content: prompt });
   userInput.value = '';
   isLoading.value = true;
 
-  const aiMsgIndex = messages.value.push({ role: 'ai', content: '' }) - 1;
+  const aiMsgIndex = chatStore.addAiMessage({ role: 'ai', content: '' });
 
   try {
     await api.post(
@@ -48,13 +48,13 @@ const handleSendMessage = async () => {
             .filter((line) => line.startsWith('data:'))
             .map((line) => line.replace('data:', ''))
             .join('');
-          messages.value[aiMsgIndex].content = cleanText;
+          chatStore.updateAiMessage(aiMsgIndex, cleanText);
         }
       }
     );
   } catch (err) {
     console.error('Chat Error:', err);
-    messages.value[aiMsgIndex].content = "⚠️ I'm having trouble connecting to your data right now.";
+    chatStore.updateAiMessage(aiMsgIndex, "I'm having trouble connecting to your data right now.");
   } finally {
     isLoading.value = false;
     isStreaming.value = false;
@@ -75,7 +75,7 @@ const handleSendMessage = async () => {
     <!-- Messages -->
     <div ref="chatWindow" class="chat-messages">
       <div
-        v-for="(msg, index) in messages"
+        v-for="(msg, index) in chatStore.aiMessages"
         :key="index"
         :class="['message-row', msg.role === 'user' ? 'message-row--user' : 'message-row--ai']"
       >
