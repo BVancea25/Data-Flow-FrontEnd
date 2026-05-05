@@ -14,13 +14,22 @@ const defaultAiMessage: AiChatMessage = {
   content: 'Hello! I have access to your budget and transaction history. What would you like to know?'
 };
 
+function createConversationId() {
+  if (window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+
+  return `conversation-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export const useChatStore = defineStore('chat', {
   // ℹ️ arrow function recommended for full type inference
   state: () => ({
     chats: [] as IChat[],
     chatContacts: [] as IUser[],
     profile: null,
-    aiMessages: [defaultAiMessage] as AiChatMessage[]
+    aiMessages: [defaultAiMessage] as AiChatMessage[],
+    conversationId: createConversationId()
   }),
   actions: {
     setChats(chats) {
@@ -43,6 +52,7 @@ export const useChatStore = defineStore('chat', {
     },
     resetAiMessages() {
       this.aiMessages = [defaultAiMessage];
+      this.conversationId = createConversationId();
     },
     async initChat() {
       try {
@@ -61,6 +71,6 @@ export const useChatStore = defineStore('chat', {
   persist: {
     key: 'dataflow-ai-chat',
     storage: window.sessionStorage,
-    paths: ['aiMessages']
+    paths: ['aiMessages', 'conversationId']
   }
 });

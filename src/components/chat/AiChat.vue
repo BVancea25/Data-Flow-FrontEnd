@@ -37,7 +37,7 @@ const handleSendMessage = async () => {
   try {
     await api.post(
       baseUrl + '/api/v1/ai/chat/stream',
-      { message: prompt },
+      { message: prompt, conversationId: chatStore.conversationId },
       {
         responseType: 'stream',
         onDownloadProgress: (progressEvent) => {
