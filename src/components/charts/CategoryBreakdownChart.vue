@@ -101,19 +101,21 @@ const hasData = computed(() => series.value.length > 0);
 <style scoped>
 .chart-card {
   background: white;
-  border-radius: 10px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-  min-height: 400px;
+  box-shadow: 0 8px 24px rgba(20, 24, 40, 0.05);
+  min-height: 430px;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .chart-title {
   margin-bottom: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #333;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #202433;
 }
 
 .state-container {

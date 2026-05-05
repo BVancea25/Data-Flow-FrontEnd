@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, watch, ref, onMounted, computed } from 'vue';
+import { watch, ref, onMounted, computed } from 'vue';
 import type { DashboardFilter } from '@/types/dashboard';
 import { fetchCategories } from '@/api/category';
 import type { Category } from '@/api/category';
@@ -19,20 +19,22 @@ const currencies = ref<ICurrency[]>([]);
 
 const currencySearch = ref('');
 const isCurrencyLoading = ref(false);
-// local copy to avoid direct mutation
-const localFilters = computed({
-  get: () => props.modelValue,
-  set: (val: DashboardFilter) => emit('update:modelValue', val)
+const showAdvanced = ref(false);
+
+const activeAdvancedFilters = computed(() => {
+  return [
+    props.modelValue.paymentMethod,
+    props.modelValue.categoryId,
+    props.modelValue.timeMeasure && props.modelValue.timeMeasure !== 'MONTH' ? props.modelValue.timeMeasure : null
+  ].filter(Boolean).length;
 });
 
-//sync watcher
-watch(
-  localFilters,
-  (val) => {
-    emit('update:modelValue', { ...val });
-  },
-  { deep: true }
-);
+function updateFilter<K extends keyof DashboardFilter>(key: K, value: DashboardFilter[K]) {
+  emit('update:modelValue', {
+    ...props.modelValue,
+    [key]: value
+  });
+}
 
 //currency watcher
 watch(currencySearch, async (val) => {
@@ -52,87 +54,154 @@ onMounted(async () => {
 </script>
 
 <template>
-  <VCard class="pa-4 mb-4">
-    <VRow dense>
-      <!-- Date From -->
-      <VCol cols="12" md="4">
-        <VTextField v-model="localFilters.from" type="date" label="From" density="compact" />
-      </VCol>
+  <VCard class="dashboard-filters" elevation="0">
+    <div class="quick-filter-grid">
+      <VTextField
+        :model-value="modelValue.from"
+        type="date"
+        label="From"
+        density="compact"
+        hide-details
+        @update:model-value="updateFilter('from', $event)"
+      />
 
-      <!-- Date To -->
-      <VCol cols="12" md="4">
-        <VTextField v-model="localFilters.to" type="date" label="To" density="compact" />
-      </VCol>
+      <VTextField
+        :model-value="modelValue.to"
+        type="date"
+        label="To"
+        density="compact"
+        hide-details
+        @update:model-value="updateFilter('to', $event)"
+      />
 
-      <!-- Time Measure -->
-      <VCol cols="12" md="4">
+      <VAutocomplete
+        :model-value="modelValue.currencyCode"
+        v-model:search="currencySearch"
+        :items="currencies"
+        :loading="isCurrencyLoading"
+        item-title="code"
+        item-value="code"
+        label="Currency"
+        density="compact"
+        clearable
+        hide-details
+        no-filter
+        :no-data-text="isCurrencyLoading ? 'Searching...' : 'Type to search currencies'"
+        @update:model-value="updateFilter('currencyCode', $event)"
+      />
+
+      <VSelect
+        :model-value="modelValue.type"
+        :items="[
+          { title: 'All activity', value: null },
+          { title: 'Income', value: 'INCOME' },
+          { title: 'Expense', value: 'EXPENSE' }
+        ]"
+        label="Type"
+        density="compact"
+        hide-details
+        @update:model-value="updateFilter('type', $event)"
+      />
+
+      <VBtn
+        class="filters-toggle"
+        variant="tonal"
+        color="primary"
+        :prepend-icon="showAdvanced ? 'mdi-filter-minus-outline' : 'mdi-filter-variant'"
+        @click="showAdvanced = !showAdvanced"
+      >
+        Filters
+        <VChip v-if="activeAdvancedFilters" class="ml-2" size="x-small" color="primary">
+          {{ activeAdvancedFilters }}
+        </VChip>
+      </VBtn>
+    </div>
+
+    <VExpandTransition>
+      <div v-show="showAdvanced" class="advanced-filter-grid">
         <VSelect
-          v-model="localFilters.timeMeasure"
+          :model-value="modelValue.timeMeasure"
           :items="['DAY', 'MONTH', 'YEAR']"
-          label="Time Measure"
+          label="Group by"
           density="compact"
+          hide-details
+          @update:model-value="updateFilter('timeMeasure', $event)"
         />
-      </VCol>
-    </VRow>
-    <VRow>
-      <!-- Payment Method -->
-      <VCol cols="12" md="3">
+
         <VSelect
-          v-model="localFilters.paymentMethod"
+          :model-value="modelValue.paymentMethod"
           :items="[
-            { title: 'All', value: null },
+            { title: 'All payments', value: null },
             { title: 'Cash', value: 'CASH' },
             { title: 'Card', value: 'CARD' },
-            { title: 'Bank Transfer', value: 'TRANSFER' }
+            { title: 'Bank transfer', value: 'TRANSFER' }
           ]"
           label="Payment"
           density="compact"
+          hide-details
+          @update:model-value="updateFilter('paymentMethod', $event)"
         />
-      </VCol>
 
-      <!-- Transaction Type -->
-      <VCol cols="12" md="3">
-        <VSelect
-          v-model="localFilters.type"
-          :items="[
-            { title: 'All', value: null },
-            { title: 'Income', value: 'INCOME' },
-            { title: 'Expense', value: 'EXPENSE' }
-          ]"
-          label="Type"
-          density="compact"
-        />
-      </VCol>
-
-      <!-- Category -->
-      <VCol cols="12" md="3">
         <VAutocomplete
-          v-model="localFilters.categoryId"
+          :model-value="modelValue.categoryId"
           :items="categories"
           item-title="name"
           item-value="id"
           label="Category"
           density="compact"
           clearable
+          hide-details
+          @update:model-value="updateFilter('categoryId', $event)"
         />
-      </VCol>
-
-      <VCol cols="12" md="3">
-        <VAutocomplete
-          v-model="localFilters.currencyCode"
-          v-model:search="currencySearch"
-          :items="currencies"
-          :loading="isCurrencyLoading"
-          item-title="code"
-          item-value="code"
-          label="Currency"
-          density="compact"
-          clearable
-          persistent-hint
-          hint="Type to search"
-          :no-data-text="isCurrencyLoading ? 'Searching...' : 'Type to search currencies'"
-        />
-      </VCol>
-    </VRow>
+      </div>
+    </VExpandTransition>
   </VCard>
 </template>
+
+<style scoped>
+.dashboard-filters {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #e7e9f0;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.quick-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr)) auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.advanced-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(180px, 1fr));
+  gap: 12px;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid #edf0f5;
+}
+
+.filters-toggle {
+  height: 40px;
+  min-width: 120px;
+}
+
+@media (max-width: 1100px) {
+  .quick-filter-grid {
+    grid-template-columns: repeat(2, minmax(180px, 1fr));
+  }
+
+  .filters-toggle {
+    width: 100%;
+  }
+}
+
+@media (max-width: 700px) {
+  .quick-filter-grid,
+  .advanced-filter-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

@@ -132,16 +132,18 @@ const hasData = computed(() => rawData.value.length > 0);
 <style scoped>
 .chart-card {
   background: white;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  min-height: 450px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 8px 24px rgba(20, 24, 40, 0.05);
+  min-height: 430px;
+  height: 100%;
 }
 
 .chart-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1a202c;
+  font-size: 1rem;
+  font-weight: 800;
+  color: #202433;
 }
 
 .state-container {

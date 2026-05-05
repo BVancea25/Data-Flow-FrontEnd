@@ -120,11 +120,28 @@ const chartOptions = computed(() => {
 });
 </script>
 <template>
-  <VCard>
-    <VCardTitle>Overview</VCardTitle>
+  <VCard class="chart-card" elevation="0">
+    <VCardTitle class="chart-title">Cash Flow Overview</VCardTitle>
 
     <VCardText>
       <apexchart type="bar" height="350" :options="chartOptions.chartOptions" :series="chartOptions.series" />
     </VCardText>
   </VCard>
 </template>
+
+<style scoped>
+.chart-card {
+  height: 100%;
+  min-height: 430px;
+  border: 1px solid #edf0f5;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(20, 24, 40, 0.05);
+}
+
+.chart-title {
+  color: #202433;
+  font-size: 1rem;
+  font-weight: 800;
+  padding: 18px 20px 0;
+}
+</style>
