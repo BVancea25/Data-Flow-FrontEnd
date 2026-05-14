@@ -104,7 +104,11 @@ const exportToPdf = async () => {
       margin: 0.25, // in inches
       filename: `Financial_Report_${filters.currencyCode}.pdf`,
       image: { type: 'jpeg', quality: 1 },
-      pagebreak: { mode: ['css'], avoid: '.v-row' },
+      pagebreak: {
+        mode: ['css', 'legacy'],
+        before: '.pdf-page-break-after-primary',
+        avoid: ['.dashboard-grid', '.chart-card', '.kpi-card']
+      },
       html2canvas: {
         scale: 2, // Higher scale = sharper charts
         useCORS: true,
@@ -148,7 +152,7 @@ const exportToPdf = async () => {
         </div>
       </div>
 
-      <div class="html2pdf__page-break"></div>
+      <div class="pdf-page-break-after-primary"></div>
 
       <div class="dashboard-grid secondary-grid">
         <div class="grid-span-5">
@@ -194,6 +198,20 @@ const exportToPdf = async () => {
   grid-template-columns: repeat(12, minmax(0, 1fr));
   gap: 18px;
   align-items: stretch;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.pdf-page-break-after-primary {
+  height: 0;
+  break-before: page;
+  page-break-before: always;
+}
+
+:deep(.chart-card),
+:deep(.kpi-card) {
+  break-inside: avoid;
+  page-break-inside: avoid;
 }
 
 .grid-span-8 {

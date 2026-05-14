@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import api from '@/api/axios';
+import { getApiErrorMessage } from '@/utils/apiErrors';
 
 const file = ref<File | null>(null);
 const uploading = ref(false);
@@ -116,12 +117,8 @@ const uploadFile = async () => {
     } else {
       successMessage.value = result.message || `File imported successfully. Imported ${result.importedRows} rows.`;
     }
-  } catch (err: any) {
-    const backendMessage = err?.response?.data;
-    errorMessage.value =
-      typeof backendMessage === 'string'
-        ? backendMessage
-        : 'Upload failed. Please verify the file format and contents.';
+  } catch (err) {
+    errorMessage.value = getApiErrorMessage(err, 'Upload failed. Please verify the file format and contents.');
   } finally {
     uploading.value = false;
   }

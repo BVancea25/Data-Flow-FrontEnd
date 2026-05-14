@@ -7,6 +7,13 @@ import { createTransaction, updateTransaction } from '@/api/income';
 import { VAutocomplete, VTextField } from 'vuetify/components';
 import { ICurrency, searchCurrenciesByCode } from '@/api/currency';
 import { typeOptions, paymentModeOptions } from '@/utils/constants';
+import { getApiErrorMessage } from '@/utils/apiErrors';
+import {
+  dateTimeLocalValidator,
+  maxTrimmedLengthValidator,
+  positiveNumberValidator,
+  requiredValidator
+} from '@/utils/validators';
 
 interface Props {
   show: boolean;
@@ -17,6 +24,8 @@ const emit = defineEmits(['close', 'saved']);
 
 const formRef = ref();
 const formValid = ref(false);
+const submitting = ref(false);
+const errorMessage = ref('');
 
 const income = reactive<Partial<IIncome>>({
   categoryId: '',
@@ -34,6 +43,19 @@ const loadingCurrencies = ref(false);
 const categories = ref<Category[]>([]);
 const loadingCategories = ref(false);
 
+const currencyCodeRules = [
+  requiredValidator,
+  (value: unknown) => {
+    if (!value) return true;
+
+    const selectedCode = String(value);
+    const selectedFromCurrentSearch = currencyItems.value.some((currency) => currency.code === selectedCode);
+    const selectedFromExistingTransaction = props.transaction?.currencyCode === selectedCode;
+
+    return selectedFromCurrentSearch || selectedFromExistingTransaction || 'Select a currency from the list';
+  }
+];
+
 watch(currencySearch, async (newQuery) => {
   if (!newQuery || newQuery.length < 1) {
     currencyItems.value = [];
@@ -43,7 +65,7 @@ watch(currencySearch, async (newQuery) => {
   try {
     currencyItems.value = await searchCurrenciesByCode(newQuery);
   } catch (err) {
-    console.error('Failed to fetch currencies:', err);
+    errorMessage.value = getApiErrorMessage(err, 'Unable to load currencies. Please try again.');
   } finally {
     loadingCurrencies.value = false;
   }
@@ -52,6 +74,8 @@ watch(currencySearch, async (newQuery) => {
 watch(
   () => props.transaction,
   (newVal) => {
+    errorMessage.value = '';
+
     if (newVal) {
       Object.assign(income, newVal); // ✅ correctly populate reactive object
     } else {
@@ -81,7 +105,7 @@ watch(
         income.categoryId = '';
       }
     } catch (err) {
-      console.error('Failed to fetch categories:', err);
+      errorMessage.value = getApiErrorMessage(err, 'Unable to load categories. Please try again.');
     } finally {
       loadingCategories.value = false;
     }
@@ -91,7 +115,11 @@ watch(
 
 async function handleSubmit() {
   const form = formRef.value as any;
-  if (!(await form.validate())) return;
+  const validation = await form.validate();
+  if (!validation.valid) return;
+
+  submitting.value = true;
+  errorMessage.value = '';
 
   try {
     if (props.transaction) {
@@ -102,7 +130,9 @@ async function handleSubmit() {
     emit('saved');
     emit('close');
   } catch (err) {
-    console.error('Failed to create income transaction:', err);
+    errorMessage.value = getApiErrorMessage(err, 'Unable to save the transaction. Please try again.');
+  } finally {
+    submitting.value = false;
   }
 }
 </script>
@@ -113,7 +143,7 @@ async function handleSubmit() {
       <VCardTitle>{{ props.transaction ? 'Edit Transaction' : 'Add New Income Transaction' }}</VCardTitle>
       <VCardText>
         <VForm ref="formRef" v-model="formValid">
-          <VSelect v-model="income.type" label="Type" class="form-field" :items="typeOptions" />
+          <VSelect v-model="income.type" label="Type" class="form-field" :items="typeOptions" :rules="[requiredValidator]" />
           <VAutocomplete
             class="form-field"
             v-model="income.categoryId"
@@ -126,13 +156,18 @@ async function handleSubmit() {
             clearable
             :disabled="!income.type"
           />
-          <VTextField class="form-field" v-model="income.description" label="Description" />
+          <VTextField
+            class="form-field"
+            v-model="income.description"
+            label="Description"
+            :rules="[maxTrimmedLengthValidator(180)]"
+          />
           <VTextField
             class="form-field"
             v-model.number="income.amount"
             label="Amount"
             type="number"
-            :rules="[(v) => v > 0 || 'Must be > 0']"
+            :rules="[requiredValidator, positiveNumberValidator]"
           />
           <VAutocomplete
             class="form-field"
@@ -146,22 +181,32 @@ async function handleSubmit() {
             label="Currency"
             clearable
             hide-no-data
-            hide-details
             no-filter
+            :rules="currencyCodeRules"
           />
-          <VSelect class="form-field" v-model="income.paymentMode" :items="paymentModeOptions" label="Payment Mode" />
+          <VSelect
+            class="form-field"
+            v-model="income.paymentMode"
+            :items="paymentModeOptions"
+            label="Payment Mode"
+            :rules="[requiredValidator]"
+          />
           <VTextField
             class="form-field"
             v-model="income.transactionDate"
             label="Transaction Date"
             type="datetime-local"
+            :rules="[requiredValidator, dateTimeLocalValidator]"
           />
         </VForm>
+        <VAlert v-if="errorMessage" type="error" variant="tonal" density="comfortable" class="mt-3">
+          {{ errorMessage }}
+        </VAlert>
       </VCardText>
       <VCardActions>
         <VSpacer />
-        <VBtn text @click="emit('close')">Cancel</VBtn>
-        <VBtn color="primary" :disabled="!formValid" @click="handleSubmit">Save</VBtn>
+        <VBtn text :disabled="submitting" @click="emit('close')">Cancel</VBtn>
+        <VBtn color="primary" :loading="submitting" :disabled="!formValid" @click="handleSubmit">Save</VBtn>
       </VCardActions>
     </VCard>
   </VDialog>

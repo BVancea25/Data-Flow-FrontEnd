@@ -9,6 +9,8 @@ import TransactionForm from '../forms/TransactionForm.vue';
 import formatEnum from '../../utils/formatters';
 import { typeOptions, paymentModeOptions } from '@/utils/constants';
 import BulkEditTransactionForm from '../forms/BulkEditTransactionForm.vue';
+import { getApiErrorMessage } from '@/utils/apiErrors';
+import { dateOnlyValidator, optionalDateRangeValidator } from '@/utils/validators';
 
 const transactions = ref<IIncome[]>([]);
 const categories = ref<Category[]>([]);
@@ -19,6 +21,8 @@ const showAddDialog = ref(false);
 const showEditDialog = ref(false);
 const showBulkEditDialog = ref(false);
 const editingTransaction = ref<IIncome | null>(null);
+const pageErrorMessage = ref('');
+const deleteLoading = ref(false);
 
 const selected = ref<IIncome[]>([]);
 
@@ -68,19 +72,25 @@ watch(
 
 async function handleBulkDelete() {
   const ids = selected.value.map((t) => t.id);
-  console.log(ids);
   if (!ids.length) return;
   if (confirm(`Delete ${ids.length} income transactions?`)) {
-    await deleteTransactions(ids);
-    selected.value = [];
-    await loadTransactions();
+    deleteLoading.value = true;
+    pageErrorMessage.value = '';
+    try {
+      await deleteTransactions(ids);
+      selected.value = [];
+      await loadTransactions();
+    } catch (err) {
+      pageErrorMessage.value = getApiErrorMessage(err, 'Unable to delete the selected transactions.');
+    } finally {
+      deleteLoading.value = false;
+    }
   }
 }
 
 async function handleEdit(item: IIncome) {
   const income = item ?? transactions.value.find((t) => t.id === selected.value[0].id) ?? null;
   if (!income) return;
-  console.log(transactions.value.find((t) => t.id === selected.value[0].id));
   editingTransaction.value = { ...income };
   showEditDialog.value = true;
 }
@@ -92,7 +102,7 @@ function handleEditRow(item: any) {
 
 async function loadTransactions() {
   loading.value = true;
-  console.log(filters);
+  pageErrorMessage.value = '';
   try {
     const sortOption = options.sortBy?.[0] || { key: 'transactionDate', order: 'desc' };
     const resp: IncomePage = await fetchTransactions({
@@ -106,25 +116,41 @@ async function loadTransactions() {
     transactions.value = resp.content;
     totalItems.value = resp.totalElements;
   } catch (err) {
-    console.error('Failed to fetch transactions:', err);
+    pageErrorMessage.value = getApiErrorMessage(err, 'Unable to load transactions. Please try again.');
   } finally {
     loading.value = false;
   }
 }
 
 function handleApplyFilters() {
+  const startDateValid = dateOnlyValidator(filters.startDate);
+  const endDateValid = dateOnlyValidator(filters.endDate);
+  const dateRangeValid = optionalDateRangeValidator(filters.startDate, filters.endDate);
+
+  if (startDateValid !== true || endDateValid !== true || dateRangeValid !== true) {
+    pageErrorMessage.value =
+      typeof dateRangeValid === 'string' ? dateRangeValid : 'Use valid dates before applying filters.';
+    return;
+  }
+
+  pageErrorMessage.value = '';
   options.page = 1; // reset pagination
   loadTransactions();
 }
 
 function handleResetFilters() {
   Object.keys(filters).forEach((key) => (filters[key as keyof typeof filters] = ''));
+  pageErrorMessage.value = '';
   handleApplyFilters();
 }
 
 onMounted(async () => {
   loadTransactions();
-  categories.value = await fetchCategories();
+  try {
+    categories.value = await fetchCategories();
+  } catch (err) {
+    pageErrorMessage.value = getApiErrorMessage(err, 'Unable to load categories for filtering.');
+  }
 });
 </script>
 
@@ -134,7 +160,16 @@ onMounted(async () => {
       <VCol cols="12">
         <VCard>
           <VCardTitle>Your Income Transactions</VCardTitle>
-          <VBtn color="error" :disabled="!selected.length" @click="handleBulkDelete" style="margin-left: 15px">
+          <VAlert v-if="pageErrorMessage" type="error" variant="tonal" density="comfortable" class="mx-4 mb-4">
+            {{ pageErrorMessage }}
+          </VAlert>
+          <VBtn
+            color="error"
+            :disabled="!selected.length"
+            :loading="deleteLoading"
+            @click="handleBulkDelete"
+            style="margin-left: 15px"
+          >
             Delete selected
           </VBtn>
           <VBtn color="success" @click="showAddDialog = true" style="margin-left: 15px">Add Income Transaction</VBtn>

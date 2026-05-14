@@ -5,6 +5,7 @@ import type { Category } from '@/api/category';
 import formatEnum from '@/utils/formatters';
 import { typeOptions } from '@/utils/constants';
 import CategoryForm from '@/views/forms/CategoryForm.vue';
+import { getApiErrorMessage } from '@/utils/apiErrors';
 
 const categories = ref<Category[]>([]);
 const loading = ref(false);
@@ -12,6 +13,7 @@ const selected = ref<Category[]>([]);
 const showAddDialog = ref(false);
 const showEditDialog = ref(false);
 const editingCategory = ref<Category | null>(null);
+const pageErrorMessage = ref('');
 
 // Filters
 const filters = reactive({
@@ -28,11 +30,14 @@ const headers = [
 
 async function loadCategories() {
   loading.value = true;
+  pageErrorMessage.value = '';
   try {
     categories.value = await fetchCategories({
       name: filters.name || undefined,
       type: filters.type || undefined
     });
+  } catch (err) {
+    pageErrorMessage.value = getApiErrorMessage(err, 'Unable to load categories. Please try again.');
   } finally {
     loading.value = false;
   }
@@ -41,7 +46,6 @@ async function loadCategories() {
 async function handleEdit(item: Category) {
   const income = item ?? categories.value.find((t) => t.id === selected.value[0].id) ?? null;
   if (!income) return;
-  console.log(categories.value.find((t) => t.id === selected.value[0].id));
   editingCategory.value = { ...income };
   showEditDialog.value = true;
 }
@@ -66,6 +70,9 @@ onMounted(loadCategories);
       <VCol cols="12">
         <VCard>
           <VCardTitle>Categories</VCardTitle>
+          <VAlert v-if="pageErrorMessage" type="error" variant="tonal" density="comfortable" class="mx-4 mb-4">
+            {{ pageErrorMessage }}
+          </VAlert>
 
           <VBtn color="success" @click="showAddDialog = true" style="margin-left: 15px"> Add Category </VBtn>
           <VBtn

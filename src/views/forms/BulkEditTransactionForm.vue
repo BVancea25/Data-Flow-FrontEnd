@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { computed, ref, reactive, watch } from 'vue';
 import { fetchCategories } from '@/api/category';
 import type { Category, TransactionType } from '@/api/category';
 import { updateTransactions } from '@/api/income';
 import type { UpdateIncome } from '@/api/type';
 import { ICurrency, searchCurrenciesByCode } from '@/api/currency';
 import { typeOptions, paymentModeOptions } from '@/utils/constants';
+import { getApiErrorMessage } from '@/utils/apiErrors';
 
 interface Props {
   show: boolean;
@@ -27,6 +28,27 @@ const loadingCategories = ref(false);
 const currencySearch = ref('');
 const currencyItems = ref<ICurrency[]>([]);
 const loadingCurrencies = ref(false);
+const submitting = ref(false);
+const errorMessage = ref('');
+
+const hasAnyPatchValue = computed(() => Object.values(patch).some((value) => value != null && value !== ''));
+const categoryRules = [
+  (value: unknown) => {
+    if (!value) return true;
+
+    return !!patch.type || 'Select a type before selecting a category';
+  }
+];
+const currencyCodeRules = [
+  (value: unknown) => {
+    if (!value) return true;
+
+    const selectedCode = String(value);
+    const selectedFromCurrentSearch = currencyItems.value.some((currency) => currency.code === selectedCode);
+
+    return selectedFromCurrentSearch || 'Select a currency from the list';
+  }
+];
 
 watch(currencySearch, async (newQuery) => {
   if (!newQuery || newQuery.length < 1) {
@@ -37,7 +59,7 @@ watch(currencySearch, async (newQuery) => {
   try {
     currencyItems.value = await searchCurrenciesByCode(newQuery);
   } catch (err) {
-    console.error('Failed to fetch currencies:', err);
+    errorMessage.value = getApiErrorMessage(err, 'Unable to load currencies. Please try again.');
   } finally {
     loadingCurrencies.value = false;
   }
@@ -53,7 +75,7 @@ watch(
       const stillValid = categories.value.some((c) => c.id === patch.categoryId);
       if (!stillValid) patch.categoryId = undefined;
     } catch (err) {
-      console.error('Failed to fetch categories:', err);
+      errorMessage.value = getApiErrorMessage(err, 'Unable to load categories. Please try again.');
     } finally {
       loadingCategories.value = false;
     }
@@ -62,22 +84,36 @@ watch(
 
 function handleClose() {
   Object.assign(patch, { type: undefined, categoryId: undefined, paymentMode: undefined, currencyCode: undefined });
+  errorMessage.value = '';
   emit('close');
 }
 
 async function handleSubmit() {
+  const validation = await formRef.value?.validate();
+  if (validation && !validation.valid) return;
+
+  if (!hasAnyPatchValue.value) {
+    errorMessage.value = 'Select at least one field to update.';
+    return;
+  }
+
   // Strip undefined fields — only send what the user actually filled in
   const payload: UpdateIncome = {
     ids: props.ids,
     ...Object.fromEntries(Object.entries(patch).filter(([, v]) => v != null && v !== ''))
   };
 
+  submitting.value = true;
+  errorMessage.value = '';
+
   try {
     await updateTransactions(payload);
     emit('saved');
     handleClose();
   } catch (err) {
-    console.error('Failed to bulk update transactions:', err);
+    errorMessage.value = getApiErrorMessage(err, 'Unable to update the selected transactions. Please try again.');
+  } finally {
+    submitting.value = false;
   }
 }
 </script>
@@ -100,6 +136,7 @@ async function handleSubmit() {
             class="form-field"
             clearable
             :disabled="!patch.type"
+            :rules="categoryRules"
           />
           <VSelect
             v-model="patch.paymentMode"
@@ -120,13 +157,17 @@ async function handleSubmit() {
             clearable
             hide-no-data
             no-filter
+            :rules="currencyCodeRules"
           />
         </VForm>
+        <VAlert v-if="errorMessage" type="error" variant="tonal" density="comfortable" class="mt-3">
+          {{ errorMessage }}
+        </VAlert>
       </VCardText>
       <VCardActions>
         <VSpacer />
-        <VBtn text @click="handleClose">Cancel</VBtn>
-        <VBtn color="primary" @click="handleSubmit">Apply</VBtn>
+        <VBtn text :disabled="submitting" @click="handleClose">Cancel</VBtn>
+        <VBtn color="primary" :loading="submitting" @click="handleSubmit">Apply</VBtn>
       </VCardActions>
     </VCard>
   </VDialog>

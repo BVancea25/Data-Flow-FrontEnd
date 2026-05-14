@@ -1,5 +1,6 @@
 export interface BudgetStatus {
   budgetId: string;
+  categoryId: string;
   categoryName: string;
   currencyCode: string;
   startDate: string;

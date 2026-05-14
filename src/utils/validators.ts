@@ -97,3 +97,75 @@ export const alphaDashValidator = (value: unknown) => {
 
   return /^[0-9A-Z_-]*$/i.test(valueAsString) || 'All Character are not valid';
 };
+
+export const finiteNumberValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  return Number.isFinite(Number(value)) || 'This field must be a valid number';
+};
+
+export const positiveNumberValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  const valueAsNumber = Number(value);
+
+  if (!Number.isFinite(valueAsNumber)) return 'This field must be a valid number';
+
+  return valueAsNumber > 0 || 'This field must be greater than 0';
+};
+
+export const dateOnlyValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  const valueAsString = String(value);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valueAsString)) return 'Use a valid date';
+
+  const date = new Date(`${valueAsString}T00:00:00`);
+  const [year, month, day] = valueAsString.split('-').map(Number);
+
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day
+  ) || 'Use a valid date';
+};
+
+export const dateTimeLocalValidator = (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  const valueAsString = String(value);
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$/.test(valueAsString)) return 'Use a valid date and time';
+
+  const date = new Date(valueAsString);
+  if (Number.isNaN(date.getTime())) return 'Use a valid date and time';
+
+  const [datePart, timePart] = valueAsString.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hour, minute, second = 0] = timePart.split(':').map(Number);
+
+  return (
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day &&
+    date.getHours() === hour &&
+    date.getMinutes() === minute &&
+    date.getSeconds() === second
+  ) || 'Use a valid date and time';
+};
+
+export const maxTrimmedLengthValidator = (maxLength: number) => (value: unknown) => {
+  if (isEmpty(value)) return true;
+
+  return String(value).trim().length <= maxLength || `Use ${maxLength} characters or fewer`;
+};
+
+export const optionalDateRangeValidator = (from: unknown, to: unknown) => {
+  if (isEmpty(from) || isEmpty(to)) return true;
+
+  const fromDateValid = dateOnlyValidator(from);
+  const toDateValid = dateOnlyValidator(to);
+
+  if (fromDateValid !== true || toDateValid !== true) return 'Use valid dates';
+
+  return String(from) <= String(to) || 'Start date must be before or equal to end date';
+};

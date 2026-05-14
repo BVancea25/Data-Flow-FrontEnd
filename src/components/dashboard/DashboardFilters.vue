@@ -4,6 +4,7 @@ import type { DashboardFilter } from '@/types/dashboard';
 import { fetchCategories } from '@/api/category';
 import type { Category } from '@/api/category';
 import { searchCurrenciesByCode, type ICurrency } from '@/api/currency';
+import { dateOnlyValidator, optionalDateRangeValidator } from '@/utils/validators';
 
 interface Props {
   modelValue: DashboardFilter;
@@ -20,6 +21,7 @@ const currencies = ref<ICurrency[]>([]);
 const currencySearch = ref('');
 const isCurrencyLoading = ref(false);
 const showAdvanced = ref(false);
+const validationMessage = ref('');
 
 const activeAdvancedFilters = computed(() => {
   return [
@@ -30,10 +32,25 @@ const activeAdvancedFilters = computed(() => {
 });
 
 function updateFilter<K extends keyof DashboardFilter>(key: K, value: DashboardFilter[K]) {
-  emit('update:modelValue', {
+  const nextValue = {
     ...props.modelValue,
     [key]: value
-  });
+  };
+
+  if (key === 'from' || key === 'to') {
+    const fromValid = dateOnlyValidator(nextValue.from);
+    const toValid = dateOnlyValidator(nextValue.to);
+    const rangeValid = optionalDateRangeValidator(nextValue.from, nextValue.to);
+
+    if (fromValid !== true || toValid !== true || rangeValid !== true) {
+      validationMessage.value =
+        typeof rangeValid === 'string' ? rangeValid : 'Use valid dates before applying filters.';
+      return;
+    }
+  }
+
+  validationMessage.value = '';
+  emit('update:modelValue', nextValue);
 }
 
 //currency watcher
@@ -116,6 +133,10 @@ onMounted(async () => {
         </VChip>
       </VBtn>
     </div>
+
+    <VAlert v-if="validationMessage" type="error" variant="tonal" density="compact" class="mt-3">
+      {{ validationMessage }}
+    </VAlert>
 
     <VExpandTransition>
       <div v-show="showAdvanced" class="advanced-filter-grid">

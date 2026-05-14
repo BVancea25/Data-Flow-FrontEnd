@@ -8,6 +8,8 @@ import { BudgetPeriod } from '@/types/budget';
 import type { BudgetStatus } from '@/types/budget';
 import type { ICurrency } from '@/api/currency';
 import type { Category } from '@/api/category';
+import { getApiErrorMessage } from '@/utils/apiErrors';
+import { dateOnlyValidator, positiveNumberValidator, requiredValidator } from '@/utils/validators';
 
 type BudgetFormBudget = BudgetStatus & {
   id?: string;
@@ -28,6 +30,8 @@ const loadingCurrencies = ref(false);
 const currencySearch = ref('');
 const formRef = ref();
 const formValid = ref(false);
+const submitting = ref(false);
+const errorMessage = ref('');
 const isEditMode = computed(() => !!(props.budget?.budgetId || props.budget?.id));
 
 const loadingCategories = ref(false);
@@ -47,11 +51,26 @@ const periodOptions = [
   { title: 'Yearly', value: BudgetPeriod.YEARLY }
 ];
 
+const currencyCodeRules = [
+  requiredValidator,
+  (value: unknown) => {
+    if (!value) return true;
+
+    const selectedCode = String(value);
+    const selectedFromCurrentSearch = currencyItems.value.some((currency) => currency.code === selectedCode);
+    const selectedFromExistingBudget = props.budget?.currencyCode === selectedCode;
+
+    return selectedFromCurrentSearch || selectedFromExistingBudget || 'Select a currency from the list';
+  }
+];
+
 // ... (Currency/Category search logic stays the same)
 
 watch(
   () => props.show,
   async (isShowing) => {
+    errorMessage.value = '';
+
     if (isShowing) {
       loadingCategories.value = true;
       try {
@@ -83,6 +102,8 @@ watch(
             isActive: true
           });
         }
+      } catch (err) {
+        errorMessage.value = getApiErrorMessage(err, 'Unable to load budget form data. Please try again.');
       } finally {
         loadingCategories.value = false;
       }
@@ -99,19 +120,26 @@ watch(currencySearch, async (newQuery) => {
   try {
     currencyItems.value = await searchCurrenciesByCode(newQuery);
   } catch (err) {
-    console.error('Failed to fetch currencies:', err);
+    errorMessage.value = getApiErrorMessage(err, 'Unable to load currencies. Please try again.');
   } finally {
     loadingCurrencies.value = false;
   }
 });
 
 async function handleSubmit() {
-  if (!(await formRef.value.validate())) return;
+  const validation = await formRef.value.validate();
+  if (!validation.valid) return;
+
+  submitting.value = true;
+  errorMessage.value = '';
 
   try {
     if (isEditMode.value) {
       const budgetId = props.budget?.budgetId || props.budget?.id;
-      if (!budgetId) return;
+      if (!budgetId) {
+        errorMessage.value = 'Unable to identify the budget to update.';
+        return;
+      }
       await updateBudget(budgetId, {
         limitAmount: budgetData.limitAmount,
         isActive: budgetData.isActive,
@@ -129,7 +157,9 @@ async function handleSubmit() {
     emit('saved');
     emit('close');
   } catch (err) {
-    console.error('Operation failed:', err);
+    errorMessage.value = getApiErrorMessage(err, 'Unable to save the budget. Please try again.');
+  } finally {
+    submitting.value = false;
   }
 }
 </script>
@@ -160,7 +190,7 @@ async function handleSubmit() {
             label="Category"
             variant="outlined"
             :disabled="isEditMode"
-            :rules="[(v) => !!v || 'Required']"
+            :rules="[requiredValidator]"
             class="mb-2 form-field"
           />
 
@@ -170,7 +200,7 @@ async function handleSubmit() {
               label="Limit Amount"
               type="number"
               variant="outlined"
-              :rules="[(v) => v > 0 || 'Must be > 0']"
+              :rules="[requiredValidator, positiveNumberValidator]"
               class="flex-grow form-field"
             />
 
@@ -179,12 +209,13 @@ async function handleSubmit() {
               v-model:search="currencySearch"
               :items="currencyItems"
               item-title="code"
-              item-value="id"
+              item-value="code"
               label="Currency"
               variant="outlined"
               class="w-32 form-field"
               hide-no-data
               no-filter
+              :rules="currencyCodeRules"
             />
           </div>
 
@@ -194,6 +225,7 @@ async function handleSubmit() {
             label="Period"
             variant="outlined"
             :disabled="isEditMode"
+            :rules="[requiredValidator]"
             class="mb-2 form-field"
           />
 
@@ -203,15 +235,18 @@ async function handleSubmit() {
             type="date"
             variant="outlined"
             :disabled="isEditMode"
-            :rules="[(v) => !!v || 'Required']"
+            :rules="[requiredValidator, dateOnlyValidator]"
           />
         </VForm>
+        <VAlert v-if="errorMessage" type="error" variant="tonal" density="comfortable" class="mt-3">
+          {{ errorMessage }}
+        </VAlert>
       </VCardText>
 
       <VCardActions class="pa-6">
         <VSpacer />
-        <VBtn variant="text" @click="emit('close')">Cancel</VBtn>
-        <VBtn color="primary" variant="flat" :disabled="!formValid" @click="handleSubmit">
+        <VBtn variant="text" :disabled="submitting" @click="emit('close')">Cancel</VBtn>
+        <VBtn color="primary" variant="flat" :loading="submitting" :disabled="!formValid" @click="handleSubmit">
           {{ isEditMode ? 'Update' : 'Create' }}
         </VBtn>
       </VCardActions>
