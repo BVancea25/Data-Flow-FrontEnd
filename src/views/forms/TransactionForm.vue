@@ -43,6 +43,25 @@ const loadingCurrencies = ref(false);
 const categories = ref<Category[]>([]);
 const loadingCategories = ref(false);
 
+function toDateTimeLocalInputValue(value: unknown) {
+  if (!value) return '';
+
+  const valueAsString = String(value);
+  const localDateTimeMatch = valueAsString.match(/^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2})/);
+  if (localDateTimeMatch) return localDateTimeMatch[1];
+
+  const parsed = new Date(valueAsString);
+  if (Number.isNaN(parsed.getTime())) return valueAsString;
+
+  const year = parsed.getFullYear();
+  const month = String(parsed.getMonth() + 1).padStart(2, '0');
+  const day = String(parsed.getDate()).padStart(2, '0');
+  const hours = String(parsed.getHours()).padStart(2, '0');
+  const minutes = String(parsed.getMinutes()).padStart(2, '0');
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
 const currencyCodeRules = [
   requiredValidator,
   (value: unknown) => {
@@ -78,6 +97,7 @@ watch(
 
     if (newVal) {
       Object.assign(income, newVal); // ✅ correctly populate reactive object
+      income.transactionDate = toDateTimeLocalInputValue(newVal.transactionDate);
     } else {
       Object.assign(income, {
         categoryId: '',

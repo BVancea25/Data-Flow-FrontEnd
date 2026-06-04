@@ -3,6 +3,7 @@
 import { useRouter } from 'vue-router';
 import { VCardActions, VCardText } from 'vuetify/components';
 import { refreshTransactions, createConsent, getConsent } from '@/api/bt';
+import { createRevolutConsent, getRevolutConsent, refreshRevolutTransactions, revokeRevolutConsent } from '@/api/revolut';
 import { ref, onMounted } from 'vue';
 import { getApiErrorMessage } from '@/utils/apiErrors';
 
@@ -16,12 +17,22 @@ const consentStatus = ref<string | null>(null);
 const btActionLoading = ref(false);
 const btErrorMessage = ref('');
 const btSuccessMessage = ref('');
+const revolutConsentStatus = ref<string | null>(null);
+const revolutActionLoading = ref(false);
+const revolutErrorMessage = ref('');
+const revolutSuccessMessage = ref('');
 
 onMounted(async () => {
   try {
     consentStatus.value = (await getConsent()) as unknown as string;
   } catch (err) {
     btErrorMessage.value = getApiErrorMessage(err, 'Unable to check the BT connection status.');
+  }
+
+  try {
+    revolutConsentStatus.value = await getRevolutConsent();
+  } catch (err) {
+    revolutErrorMessage.value = getApiErrorMessage(err, 'Unable to check the Revolut connection status.');
   }
 });
 
@@ -51,6 +62,51 @@ async function handleRefreshTransactions() {
     btErrorMessage.value = getApiErrorMessage(err, 'Unable to refresh BT transactions. Please try again.');
   } finally {
     btActionLoading.value = false;
+  }
+}
+
+async function handleCreateRevolutConsent() {
+  revolutActionLoading.value = true;
+  revolutErrorMessage.value = '';
+  revolutSuccessMessage.value = '';
+
+  try {
+    await createRevolutConsent();
+  } catch (err) {
+    revolutErrorMessage.value = getApiErrorMessage(err, 'Unable to start the Revolut connection. Please try again.');
+  } finally {
+    revolutActionLoading.value = false;
+  }
+}
+
+async function handleRefreshRevolutTransactions() {
+  revolutActionLoading.value = true;
+  revolutErrorMessage.value = '';
+  revolutSuccessMessage.value = '';
+
+  try {
+    await refreshRevolutTransactions();
+    revolutSuccessMessage.value = 'Revolut transaction refresh started successfully.';
+  } catch (err) {
+    revolutErrorMessage.value = getApiErrorMessage(err, 'Unable to refresh Revolut transactions. Please try again.');
+  } finally {
+    revolutActionLoading.value = false;
+  }
+}
+
+async function handleRevokeRevolutConsent() {
+  revolutActionLoading.value = true;
+  revolutErrorMessage.value = '';
+  revolutSuccessMessage.value = '';
+
+  try {
+    await revokeRevolutConsent();
+    revolutConsentStatus.value = 'expired';
+    revolutSuccessMessage.value = 'Revolut connection removed successfully.';
+  } catch (err) {
+    revolutErrorMessage.value = getApiErrorMessage(err, 'Unable to remove the Revolut connection. Please try again.');
+  } finally {
+    revolutActionLoading.value = false;
   }
 }
 </script>
@@ -101,6 +157,46 @@ async function handleRefreshTransactions() {
         <VBtn v-else color="primary" :loading="btActionLoading" @click.stop="handleCreateConsent"> Connect </VBtn>
       </VCardActions>
     </VCard>
+
+    <VCard class="import-card" elevation="0">
+      <div class="bank-logo-wrap">
+        <VImg src="/assets/images/other/revolut.png" alt="Revolut logo" class="revolut-logo" contain />
+      </div>
+      <VCardTitle class="card-title">Connect your Revolut account</VCardTitle>
+      <VCardText class="card-description">
+        Link your Revolut account to refresh transactions directly from the bank connection, without preparing an import
+        file.
+      </VCardText>
+      <VAlert v-if="revolutErrorMessage" type="error" variant="tonal" density="comfortable" class="mb-4">
+        {{ revolutErrorMessage }}
+      </VAlert>
+      <VAlert v-if="revolutSuccessMessage" type="success" variant="tonal" density="comfortable" class="mb-4">
+        {{ revolutSuccessMessage }}
+      </VAlert>
+      <VCardActions class="card-actions">
+        <VChip v-if="revolutConsentStatus === 'valid'" color="green" class="text-white"> Connected </VChip>
+        <VBtn
+          v-if="revolutConsentStatus === 'valid'"
+          color="info"
+          :loading="revolutActionLoading"
+          @click.stop="handleRefreshRevolutTransactions"
+        >
+          Refresh your transactions
+        </VBtn>
+        <VBtn
+          v-if="revolutConsentStatus === 'valid'"
+          color="error"
+          variant="tonal"
+          :loading="revolutActionLoading"
+          @click.stop="handleRevokeRevolutConsent"
+        >
+          Disconnect
+        </VBtn>
+        <VBtn v-else color="primary" :loading="revolutActionLoading" @click.stop="handleCreateRevolutConsent">
+          Connect
+        </VBtn>
+      </VCardActions>
+    </VCard>
   </div>
 </template>
 
@@ -132,7 +228,8 @@ async function handleRefreshTransactions() {
 }
 
 .card-icon,
-.bt-logo-wrap {
+.bt-logo-wrap,
+.bank-logo-wrap {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,6 +247,11 @@ async function handleRefreshTransactions() {
 .bt-logo {
   width: 54px;
   height: 54px;
+}
+
+.revolut-logo {
+  width: 56px;
+  height: 56px;
 }
 
 .card-title {
