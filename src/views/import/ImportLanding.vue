@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
 import { VCardActions, VCardText } from 'vuetify/components';
-import { refreshTransactions, createConsent, getConsent } from '@/api/bt';
+import { refreshTransactions, createConsent, getConsent, revokeBtConsent } from '@/api/bt';
 import { createRevolutConsent, getRevolutConsent, refreshRevolutTransactions, revokeRevolutConsent } from '@/api/revolut';
 import { ref, onMounted } from 'vue';
 import { getApiErrorMessage } from '@/utils/apiErrors';
@@ -60,6 +60,22 @@ async function handleRefreshTransactions() {
     btSuccessMessage.value = 'Transaction refresh started successfully.';
   } catch (err) {
     btErrorMessage.value = getApiErrorMessage(err, 'Unable to refresh BT transactions. Please try again.');
+  } finally {
+    btActionLoading.value = false;
+  }
+}
+
+async function handleRevokeBtConsent() {
+  btActionLoading.value = true;
+  btErrorMessage.value = '';
+  btSuccessMessage.value = '';
+
+  try {
+    await revokeBtConsent();
+    consentStatus.value = 'expired';
+    btSuccessMessage.value = 'BT connection removed successfully.';
+  } catch (err) {
+    btErrorMessage.value = getApiErrorMessage(err, 'Unable to remove the BT connection. Please try again.');
   } finally {
     btActionLoading.value = false;
   }
@@ -152,6 +168,15 @@ async function handleRevokeRevolutConsent() {
           @click.stop="handleRefreshTransactions"
         >
           Refresh your transactions
+        </VBtn>
+        <VBtn
+          v-if="consentStatus === 'valid'"
+          color="error"
+          variant="tonal"
+          :loading="btActionLoading"
+          @click.stop="handleRevokeBtConsent"
+        >
+          Disconnect
         </VBtn>
         <!-- If not valid/expired/null: show Connect button -->
         <VBtn v-else color="primary" :loading="btActionLoading" @click.stop="handleCreateConsent"> Connect </VBtn>

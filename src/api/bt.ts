@@ -19,3 +19,7 @@ export async function getConsent(): Promise<void> {
 export async function refreshTransactions(): Promise<void> {
   await api.post(baseUrl + '/bt/data_refresh');
 }
+
+export async function revokeBtConsent(): Promise<void> {
+  await api.delete(baseUrl + '/bt/consent');
+}
